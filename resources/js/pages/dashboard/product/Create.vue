@@ -3,7 +3,9 @@ import { ModalForm } from '@/components/shared';
 import ProductForm from '../../components/ProductForm.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useModal } from 'momentum-modal';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
+import { productSchema } from '../../../validation/productSchema';
+import { useFormValidation } from '@/composables/useFormValidation';
 import type { ProductFormData, ProductCreateProps } from '../../../types';
 import product from '@/routes/product';
 
@@ -39,12 +41,51 @@ const form = useForm<ProductFormData>({
     outlet_id: null,
 });
 
+// Use shared validation composable
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name']);
+
+// Get form data for validation
+const getFormData = () => ({
+    name: form.name,
+    description: form.description || null,
+    sku: form.sku || null,
+    product_type: form.product_type || null,
+    price: form.price,
+    purchase_price: form.purchase_price,
+    sale_price: form.sale_price,
+    stock: form.stock,
+    low_stock_threshold: form.low_stock_threshold,
+    status: form.status,
+    is_featured: form.is_featured,
+    pre_order: form.pre_order,
+    images: form.images || null,
+    category_id: form.category_id,
+    outlet_id: form.outlet_id,
+});
+
+// Watch form changes to validate in real-time
+watch(
+    () => [form.name, form.price, form.stock],
+    () => {
+        if (form.name || form.price > 0 || form.stock > 0) {
+            validateForm(getFormData());
+        }
+    }
+);
+
+// Check if form is valid for submit button state (custom for Product)
+const isFormInvalid = computed(() => {
+    return !form.name || form.name.trim() === '' || form.price < 0 || form.stock < 0;
+});
+
 const handleSubmit = () => {
-    form.post(product.products.store.url(), {
-        onSuccess: () => {
-            close();
-            redirect();
-        },
+    validateAndSubmit(getFormData(), form, () => {
+        form.post(product.products.store.url(), {
+            onSuccess: () => {
+                close();
+                redirect();
+            },
+        });
     });
 };
 
@@ -63,6 +104,7 @@ const handleCancel = () => {
         size="2xl"
         submit-text="Create Product"
         :loading="form.processing"
+        :disabled="isFormInvalid"
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
