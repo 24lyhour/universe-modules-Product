@@ -287,8 +287,7 @@ const outletIdString = computed({
                 <div class="flex items-center space-x-2">
                     <Checkbox
                         id="is_featured"
-                        :checked="model.is_featured"
-                        @update:checked="model.is_featured = $event"
+                        v-model="model.is_featured"
                     />
                     <Label for="is_featured" class="cursor-pointer">
                         Featured Product
@@ -301,8 +300,7 @@ const outletIdString = computed({
                 <div class="flex items-center space-x-2">
                     <Checkbox
                         id="pre_order"
-                        :checked="model.pre_order"
-                        @update:checked="model.pre_order = $event"
+                        v-model="model.pre_order"
                     />
                     <Label for="pre_order" class="cursor-pointer">
                         Allow Pre-orders
