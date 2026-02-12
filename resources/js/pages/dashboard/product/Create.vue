@@ -44,7 +44,9 @@ const form = useForm<ProductFormData>({
 // Use shared validation composable
 const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name']);
 
-// Get form data for validation
+/**
+ * get form data
+ */
 const getFormData = () => ({
     name: form.name,
     description: form.description || null,
@@ -73,7 +75,9 @@ watch(
     }
 );
 
-// Check if form is valid for submit button state (custom for Product)
+/**
+ * check the validation form requeired
+ */
 const isFormInvalid = computed(() => {
     return !form.name || form.name.trim() === '' || form.price < 0 || form.stock < 0;
 });
