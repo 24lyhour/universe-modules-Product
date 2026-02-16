@@ -4,6 +4,7 @@ namespace Modules\Product\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Modules\Outlet\Models\Outlet;
 use Modules\Product\Models\Product;
 
 class ProductDatabaseSeeder extends Seeder
@@ -13,6 +14,14 @@ class ProductDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get all outlets
+        $outlets = Outlet::all();
+
+        if ($outlets->isEmpty()) {
+            $this->command->warn('No outlets found. Please run OutletSeeder first.');
+            return;
+        }
+
         $products = [
             [
                 'name' => 'Classic Burger',
@@ -276,26 +285,40 @@ class ProductDatabaseSeeder extends Seeder
             ],
         ];
 
-        foreach ($products as $productData) {
-            Product::create([
-                'uuid' => Str::uuid(),
-                'name' => $productData['name'],
-                'slug' => Str::slug($productData['name']),
-                'description' => $productData['description'],
-                'sku' => $productData['sku'],
-                'price' => $productData['price'],
-                'purchase_price' => $productData['purchase_price'],
-                'sale_price' => $productData['sale_price'],
-                'stock' => $productData['stock'],
-                'low_stock_threshold' => $productData['low_stock_threshold'],
-                'status' => $productData['status'],
-                'is_featured' => $productData['is_featured'],
-                'product_type' => $productData['product_type'],
-                'pre_order' => false,
-                'images' => [],
-            ]);
+        $createdCount = 0;
+
+        // Create products for each outlet
+        foreach ($outlets as $outlet) {
+            foreach ($products as $productData) {
+                $productName = $productData['name'];
+                $sku = $productData['sku'] . '-' . $outlet->id;
+
+                Product::firstOrCreate(
+                    ['sku' => $sku],
+                    [
+                        'uuid' => Str::uuid(),
+                        'outlet_id' => $outlet->id,
+                        'name' => $productName,
+                        'slug' => Str::slug($productName . '-' . $outlet->id),
+                        'description' => $productData['description'],
+                        'sku' => $sku,
+                        'price' => $productData['price'],
+                        'purchase_price' => $productData['purchase_price'],
+                        'sale_price' => $productData['sale_price'],
+                        'stock' => $productData['stock'],
+                        'low_stock_threshold' => $productData['low_stock_threshold'],
+                        'status' => $productData['status'],
+                        'is_featured' => $productData['is_featured'],
+                        'product_type' => $productData['product_type'],
+                        'pre_order' => false,
+                        'images' => [],
+                    ]
+                );
+
+                $createdCount++;
+            }
         }
 
-        $this->command->info('Created ' . count($products) . ' products.');
+        $this->command->info("Products seeded successfully. Created products for {$outlets->count()} outlets.");
     }
 }
