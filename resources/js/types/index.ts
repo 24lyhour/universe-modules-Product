@@ -131,3 +131,168 @@ export interface ProductEditProps {
     categories?: ProductCategory[];
     outlets?: Outlet[];
 }
+
+// ==================== VARIATION TYPES ====================
+
+export type AttributeType = 'select' | 'color' | 'button';
+
+export interface ProductAttribute {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    type: AttributeType;
+    description: string | null;
+    sort_order: number;
+    is_active: boolean;
+    values?: ProductAttributeValue[];
+    values_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductAttributeValue {
+    id: number;
+    uuid: string;
+    attribute_id: number;
+    value: string;
+    label: string | null;
+    color_code: string | null;
+    image_url: string | null;
+    price_adjustment: number;
+    sort_order: number;
+    is_active: boolean;
+    attribute?: ProductAttribute;
+    display_label?: string;
+    formatted_price_adjustment?: string;
+}
+
+export interface ProductVariant {
+    id: number;
+    uuid: string;
+    product_id: number;
+    sku: string | null;
+    name: string | null;
+    price: number | null;
+    purchase_price: number | null;
+    sale_price: number | null;
+    stock: number;
+    low_stock_threshold: number;
+    barcode: string | null;
+    weight: number | null;
+    images: string[] | null;
+    attribute_values: Record<string, string> | null;
+    is_default: boolean;
+    is_active: boolean;
+    sort_order: number;
+    product?: Product;
+    attribute_value_relations?: ProductAttributeValue[];
+    effective_price?: number;
+    display_price?: number;
+    is_in_stock?: boolean;
+    is_low_stock?: boolean;
+    is_on_sale?: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+// Extended Product interface with variations
+export interface ProductWithVariations extends Product {
+    variants?: ProductVariant[];
+    attributes?: ProductAttribute[];
+    has_variants?: boolean;
+    has_attributes?: boolean;
+    total_variant_stock?: number;
+    price_range?: {
+        min: number;
+        max: number;
+    };
+    default_variant?: ProductVariant | null;
+}
+
+// Attribute Form Data
+export interface ProductAttributeFormData {
+    name: string;
+    type: AttributeType;
+    description: string;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface ProductAttributeValueFormData {
+    value: string;
+    label: string;
+    color_code: string;
+    image_url: string;
+    price_adjustment: number;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface ProductVariantFormData {
+    product_id: number;
+    sku: string;
+    name: string;
+    price: number | null;
+    purchase_price: number | null;
+    sale_price: number | null;
+    stock: number;
+    low_stock_threshold: number;
+    barcode: string;
+    weight: number | null;
+    images: string[];
+    is_default: boolean;
+    is_active: boolean;
+    sort_order: number;
+    attribute_value_ids: number[];
+}
+
+// Page Props for Attributes
+export interface ProductAttributeIndexProps {
+    attributes: PaginatedResponse<ProductAttribute>;
+    filters: {
+        search?: string;
+        type?: string;
+        is_active?: boolean;
+    };
+    stats: {
+        total: number;
+        active: number;
+        inactive: number;
+    };
+}
+
+export interface ProductAttributeShowProps {
+    attribute: ProductAttribute;
+}
+
+export interface ProductAttributeCreateProps {
+    // empty for now
+}
+
+export interface ProductAttributeEditProps {
+    attribute: ProductAttribute;
+}
+
+// Page Props for Variants
+export interface ProductVariantIndexProps {
+    product: Product;
+    variants: PaginatedResponse<ProductVariant>;
+    attributes: ProductAttribute[];
+}
+
+export interface ProductVariantShowProps {
+    product: Product;
+    variant: ProductVariant;
+}
+
+export interface ProductVariantCreateProps {
+    product: Product;
+    attributes: ProductAttribute[];
+}
+
+export interface ProductVariantEditProps {
+    product: Product;
+    variant: ProductVariant;
+    attributes: ProductAttribute[];
+}
