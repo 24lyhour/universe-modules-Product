@@ -69,7 +69,7 @@ class ProductService
             $query->where('price', '<=', $filters['max_price']);
         }
 
-        return $query->latest()->paginate($perPage);
+        return $query->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
     }
 
     /**

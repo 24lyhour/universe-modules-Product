@@ -50,6 +50,10 @@ class ProductResource extends JsonResource
             }),
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
+            'variants_count' => $this->whenCounted('variants'),
+            'attributes_count' => $this->whenCounted('attributes'),
+            'has_variants' => $this->when($this->variants_count !== null, fn() => $this->variants_count > 0),
+            'has_attributes' => $this->when($this->attributes_count !== null, fn() => $this->attributes_count > 0),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

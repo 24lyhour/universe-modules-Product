@@ -30,6 +30,10 @@ export interface Product {
     outlet: Outlet | null;
     created_by: number | null;
     updated_by: number | null;
+    variants_count?: number;
+    attributes_count?: number;
+    has_variants?: boolean;
+    has_attributes?: boolean;
     created_at: string;
     updated_at: string;
 }

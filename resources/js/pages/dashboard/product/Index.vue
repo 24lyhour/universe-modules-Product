@@ -11,6 +11,8 @@ import {
     PackageX,
     Star,
     AlertTriangle,
+    Layers,
+    Tags,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -60,10 +62,11 @@ const pagination = computed(() => ({
 
 // Table columns
 const columns: TableColumn<Product>[] = [
-    { key: 'name', label: 'Product', width: '30%' },
+    { key: 'name', label: 'Product', width: '25%' },
     { key: 'sku', label: 'SKU' },
     { key: 'price', label: 'Price', align: 'right' },
     { key: 'stock', label: 'Stock', align: 'center' },
+    { key: 'variants', label: 'Variants', align: 'center' },
     { key: 'status', label: 'Status' },
     { key: 'is_featured', label: 'Featured', align: 'center' },
     { key: 'created_at', label: 'Created' },
@@ -385,6 +388,33 @@ const tableData = computed(() => {
                             v-if="item.is_low_stock && item.stock > 0"
                             class="h-4 w-4 text-yellow-500"
                         />
+                    </div>
+                </template>
+
+                <!-- Custom cell for variants -->
+                <template #cell-variants="{ item }">
+                    <div class="flex items-center justify-center gap-2">
+                        <div v-if="item.variants_count > 0" class="flex items-center gap-1.5">
+                            <Badge variant="secondary" class="tabular-nums">
+                                <Layers class="mr-1 h-3 w-3" />
+                                {{ item.variants_count }}
+                            </Badge>
+                            <Link
+                                :href="`/dashboard/products/${item.id}/variants`"
+                                class="text-xs text-primary hover:underline"
+                            >
+                                Manage
+                            </Link>
+                        </div>
+                        <div v-else class="flex items-center gap-1.5">
+                            <span class="text-muted-foreground">-</span>
+                            <Link
+                                :href="`/dashboard/products/${item.id}/variants/create`"
+                                class="text-xs text-primary hover:underline"
+                            >
+                                Add
+                            </Link>
+                        </div>
                     </div>
                 </template>
 
