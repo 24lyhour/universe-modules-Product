@@ -48,6 +48,24 @@ class ProductResource extends JsonResource
                     'name' => $this->outlet->name,
                 ];
             }),
+            'upsale_id' => $this->upsale_id,
+            'upsell' => $this->whenLoaded('upsell', function () {
+                return [
+                    'id' => $this->upsell->id,
+                    'name' => $this->upsell->name,
+                    'price' => (float) $this->upsell->price,
+                    'sku' => $this->upsell->sku,
+                ];
+            }),
+            'down_sale_id' => $this->down_sale_id,
+            'downsell' => $this->whenLoaded('downsell', function () {
+                return [
+                    'id' => $this->downsell->id,
+                    'name' => $this->downsell->name,
+                    'price' => (float) $this->downsell->price,
+                    'sku' => $this->downsell->sku,
+                ];
+            }),
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'variants_count' => $this->whenCounted('variants'),

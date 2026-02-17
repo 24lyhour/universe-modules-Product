@@ -28,6 +28,10 @@ export interface Product {
     category: ProductCategory | null;
     outlet_id: number | null;
     outlet: Outlet | null;
+    upsale_id: number | null;
+    upsell?: ProductSimple | null;
+    down_sale_id: number | null;
+    downsell?: ProductSimple | null;
     created_by: number | null;
     updated_by: number | null;
     variants_count?: number;
@@ -41,6 +45,13 @@ export interface Product {
 export interface ProductCategory {
     id: number;
     name: string;
+}
+
+export interface ProductSimple {
+    id: number;
+    name: string;
+    price: number;
+    sku: string | null;
 }
 
 export interface Outlet {
@@ -111,6 +122,8 @@ export interface ProductFormData {
     images: string[];
     category_id: number | null;
     outlet_id: number | null;
+    upsale_id: number | null;
+    down_sale_id: number | null;
 }
 
 // Page Props Types
@@ -128,12 +141,14 @@ export interface ProductShowProps {
 export interface ProductCreateProps {
     categories?: ProductCategory[];
     outlets?: Outlet[];
+    products?: ProductSimple[];
 }
 
 export interface ProductEditProps {
     product: Product;
     categories?: ProductCategory[];
     outlets?: Outlet[];
+    products?: ProductSimple[];
 }
 
 // ==================== VARIATION TYPES ====================
@@ -198,6 +213,73 @@ export interface ProductVariant {
     is_on_sale?: boolean;
     created_at: string;
     updated_at: string;
+}
+
+// ==================== UPSELL TYPES ====================
+
+export type UpsellType = 'upsell' | 'downsell' | 'cross_sell';
+
+export interface ProductUpsell {
+    id: number;
+    uuid: string;
+    product_id: number;
+    upsell_product_id: number;
+    type: UpsellType;
+    type_label: string;
+    discount_percentage: number | null;
+    discounted_price: number | null;
+    sort_order: number;
+    is_active: boolean;
+    upsell_product?: {
+        id: number;
+        uuid: string;
+        name: string;
+        slug: string;
+        sku: string | null;
+        price: number;
+        sale_price: number | null;
+        effective_price: number;
+        is_on_sale: boolean;
+        stock: number;
+        is_in_stock: boolean;
+        images: string[];
+        status: string;
+    };
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductUpsellFormData {
+    upsell_product_id: number | null;
+    type: UpsellType;
+    discount_percentage: number | null;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface ProductUpsellStats {
+    total: number;
+    upsells: number;
+    downsells: number;
+    cross_sells: number;
+    active: number;
+}
+
+export interface ProductUpsellIndexProps {
+    product: ProductSimple;
+    upsells: ProductUpsell[];
+    availableProducts: ProductSimple[];
+    stats: ProductUpsellStats;
+}
+
+export interface ProductUpsellCreateProps {
+    product: ProductSimple;
+    availableProducts: ProductSimple[];
+}
+
+export interface ProductUpsellEditProps {
+    product: ProductSimple;
+    upsell: ProductUpsell;
 }
 
 // Extended Product interface with variations

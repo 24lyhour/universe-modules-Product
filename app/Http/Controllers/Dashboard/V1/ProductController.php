@@ -48,9 +48,14 @@ class ProductController extends Controller
     public function create(): Modal
     {
         $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
+        $products = Product::select('id', 'name', 'price', 'sku')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Create', [
             'outlets' => $outlets,
+            'products' => $products,
         ])->baseRoute('product.products.index');
     }
 
@@ -70,7 +75,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): Response
     {
-        $product->load('category');
+        $product->load(['category', 'upsell', 'downsell']);
 
         return Inertia::render('product::dashboard/product/Show', [
             'product' => new ProductResource($product),
@@ -82,11 +87,19 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Modal
     {
+        $product->load(['upsell', 'downsell']);
+
         $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
+        $products = Product::select('id', 'name', 'price', 'sku')
+            ->where('status', 'active')
+            ->where('id', '!=', $product->id)
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Edit', [
             'product' => (new ProductResource($product))->resolve(),
             'outlets' => $outlets,
+            'products' => $products,
         ])->baseRoute('product.products.index');
     }
 

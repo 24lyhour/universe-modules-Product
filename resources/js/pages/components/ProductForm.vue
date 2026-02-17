@@ -14,7 +14,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ImageUpload } from '@/components/shared';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductFormData, Outlet, ProductType } from '../../types';
+import type { ProductFormData, Outlet, ProductType, ProductSimple } from '../../types';
 
 // Product type options
 const productTypeOptions: { value: ProductType; label: string }[] = [
@@ -28,11 +28,13 @@ const productTypeOptions: { value: ProductType; label: string }[] = [
 interface Props {
     mode?: 'create' | 'edit';
     outlets?: Outlet[];
+    products?: ProductSimple[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     mode: 'create',
     outlets: () => [],
+    products: () => [],
 });
 
 const model = defineModel<InertiaForm<ProductFormData>>({ required: true });
@@ -44,6 +46,30 @@ const outletIdString = computed({
         model.value.outlet_id = val ? Number(val) : null;
     },
 });
+
+// Convert upsale_id to string for Select component
+const upsaleIdString = computed({
+    get: () => model.value.upsale_id?.toString() ?? '',
+    set: (val: string) => {
+        model.value.upsale_id = val ? Number(val) : null;
+    },
+});
+
+// Convert down_sale_id to string for Select component
+const downSaleIdString = computed({
+    get: () => model.value.down_sale_id?.toString() ?? '',
+    set: (val: string) => {
+        model.value.down_sale_id = val ? Number(val) : null;
+    },
+});
+
+// Format currency for display
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(value);
+};
 </script>
 
 <template>
@@ -270,6 +296,67 @@ const outletIdString = computed({
                     />
                     <p v-if="model.errors.low_stock_threshold" class="text-sm text-destructive">
                         {{ model.errors.low_stock_threshold }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upsell/Downsell Section -->
+        <div v-if="props.products && props.products.length > 0" class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Upsell & Downsell</h3>
+                <p class="text-sm text-muted-foreground">Recommend related products to customers</p>
+            </div>
+            <Separator />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="upsale_id">Upsell Product</Label>
+                    <Select v-model="upsaleIdString">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select upsell product" />
+                        </SelectTrigger>
+                        <SelectContent class="z-200">
+                            <SelectItem value="">None</SelectItem>
+                            <SelectItem
+                                v-for="product in props.products"
+                                :key="product.id"
+                                :value="product.id.toString()"
+                            >
+                                {{ product.name }} ({{ formatCurrency(product.price) }})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Higher-priced alternative to offer customers
+                    </p>
+                    <p v-if="model.errors.upsale_id" class="text-sm text-destructive">
+                        {{ model.errors.upsale_id }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="down_sale_id">Downsell Product</Label>
+                    <Select v-model="downSaleIdString">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select downsell product" />
+                        </SelectTrigger>
+                        <SelectContent class="z-200">
+                            <SelectItem value="">None</SelectItem>
+                            <SelectItem
+                                v-for="product in props.products"
+                                :key="product.id"
+                                :value="product.id.toString()"
+                            >
+                                {{ product.name }} ({{ formatCurrency(product.price) }})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Lower-priced alternative if customer declines
+                    </p>
+                    <p v-if="model.errors.down_sale_id" class="text-sm text-destructive">
+                        {{ model.errors.down_sale_id }}
                     </p>
                 </div>
             </div>

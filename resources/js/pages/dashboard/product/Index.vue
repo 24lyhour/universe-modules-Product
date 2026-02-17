@@ -13,6 +13,7 @@ import {
     AlertTriangle,
     Layers,
     Tags,
+    ArrowUpCircle,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -88,6 +89,16 @@ const tableActions: TableAction<Product>[] = [
         label: 'Toggle Featured',
         icon: Star,
         onClick: (item) => toggleFeatured(item),
+    },
+    {
+        label: 'Manage Variants',
+        icon: Layers,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/variants`),
+    },
+    {
+        label: 'Manage Upsells',
+        icon: ArrowUpCircle,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/upsells`),
     },
     {
         label: 'Delete',

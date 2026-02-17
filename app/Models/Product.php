@@ -130,6 +130,85 @@ class Product extends Model
     }
 
     /**
+     * Relation to the upsell product.
+     */
+    public function upsell(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'upsale_id');
+    }
+
+    /**
+     * Relation to the downsell product.
+     */
+    public function downsell(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'down_sale_id');
+    }
+
+    /**
+     * Get products that have this product as upsell.
+     */
+    public function upsellFor(): HasMany
+    {
+        return $this->hasMany(Product::class, 'upsale_id');
+    }
+
+    /**
+     * Get products that have this product as downsell.
+     */
+    public function downsellFor(): HasMany
+    {
+        return $this->hasMany(Product::class, 'down_sale_id');
+    }
+
+    /**
+     * Relation to product upsells (using ProductUpsell model).
+     */
+    public function productUpsells(): HasMany
+    {
+        return $this->hasMany(ProductUpsell::class, 'product_id')
+            ->orderBy('sort_order');
+    }
+
+    /**
+     * Get upsell products (higher-priced alternatives).
+     */
+    public function upsellProducts(): HasMany
+    {
+        return $this->productUpsells()
+            ->where('type', ProductUpsell::TYPE_UPSELL)
+            ->where('is_active', true);
+    }
+
+    /**
+     * Get downsell products (lower-priced alternatives).
+     */
+    public function downsellProducts(): HasMany
+    {
+        return $this->productUpsells()
+            ->where('type', ProductUpsell::TYPE_DOWNSELL)
+            ->where('is_active', true);
+    }
+
+    /**
+     * Get cross-sell products (complementary products).
+     */
+    public function crossSellProducts(): HasMany
+    {
+        return $this->productUpsells()
+            ->where('type', ProductUpsell::TYPE_CROSS_SELL)
+            ->where('is_active', true);
+    }
+
+    /**
+     * Get products that have this product as an upsell/downsell/cross-sell.
+     */
+    public function usedAsUpsellIn(): HasMany
+    {
+        return $this->hasMany(ProductUpsell::class, 'upsell_product_id');
+    }
+
+    /**
      * Relation to product variants.
      */
     public function variants(): HasMany

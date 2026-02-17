@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAttributeController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductController;
+use Modules\Product\Http\Controllers\Dashboard\V1\ProductUpsellController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductVariantController;
 use Modules\Product\Http\Middleware\DashboardMiddleware;
 
@@ -29,4 +30,14 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class])
         Route::resource('products/{product}/variants', ProductVariantController::class)
             ->names('dashboard.product.variants')
             ->parameters(['variants' => 'variant']);
+
+        // Product Upsells (nested under products)
+        Route::resource('products/{product}/upsells', ProductUpsellController::class)
+            ->names('dashboard.product.upsells')
+            ->parameters(['upsells' => 'upsell'])
+            ->except(['show']);
+        Route::patch('products/{product}/upsells/{upsell}/toggle-status', [ProductUpsellController::class, 'toggleStatus'])
+            ->name('dashboard.product.upsells.toggle-status');
+        Route::post('products/{product}/upsells/reorder', [ProductUpsellController::class, 'reorder'])
+            ->name('dashboard.product.upsells.reorder');
     });
