@@ -122,7 +122,7 @@ class ProductAttributeController extends Controller
         $attribute->load('values');
 
         return Inertia::render('product::dashboard/attribute/Show', [
-            'attribute' => new ProductAttributeResource($attribute),
+            'attribute' => (new ProductAttributeResource($attribute))->resolve(),
         ]);
     }
 
@@ -134,7 +134,7 @@ class ProductAttributeController extends Controller
         $attribute->load('values');
 
         return Inertia::render('product::dashboard/attribute/Edit', [
-            'attribute' => new ProductAttributeResource($attribute),
+            'attribute' => (new ProductAttributeResource($attribute))->resolve(),
         ]);
     }
 

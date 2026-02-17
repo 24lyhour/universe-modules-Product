@@ -74,19 +74,6 @@ class ProductServiceProvider extends ServiceProvider
                 'dashboard.product.attributes.index',
                 'Tags'
             );
-
-            // varitaion
-
-                MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Attributes'),
-                '/dashboard/products/attributes',
-                20,
-                null,
-                'dashboard.product.attributes.index',
-                'Tags'
-            );
         });
     }
 

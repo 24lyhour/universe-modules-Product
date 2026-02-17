@@ -31,9 +31,9 @@ class ProductVariantController extends Controller
             ->get();
 
         return Inertia::render('product::dashboard/variant/Index', [
-            'product' => new ProductResource($product),
+            'product' => (new ProductResource($product))->resolve(),
             'variants' => ProductVariantResource::collection($variants)->response()->getData(true),
-            'attributes' => ProductAttributeResource::collection($attributes),
+            'attributes' => ProductAttributeResource::collection($attributes)->resolve(),
         ]);
     }
 
@@ -48,8 +48,8 @@ class ProductVariantController extends Controller
             ->get();
 
         return Inertia::render('product::dashboard/variant/Create', [
-            'product' => new ProductResource($product),
-            'attributes' => ProductAttributeResource::collection($attributes),
+            'product' => (new ProductResource($product))->resolve(),
+            'attributes' => ProductAttributeResource::collection($attributes)->resolve(),
         ]);
     }
 
@@ -114,8 +114,8 @@ class ProductVariantController extends Controller
         $variant->load('attributeValueRelations.attribute');
 
         return Inertia::render('product::dashboard/variant/Show', [
-            'product' => new ProductResource($product),
-            'variant' => new ProductVariantResource($variant),
+            'product' => (new ProductResource($product))->resolve(),
+            'variant' => (new ProductVariantResource($variant))->resolve(),
         ]);
     }
 
@@ -132,9 +132,9 @@ class ProductVariantController extends Controller
             ->get();
 
         return Inertia::render('product::dashboard/variant/Edit', [
-            'product' => new ProductResource($product),
-            'variant' => new ProductVariantResource($variant),
-            'attributes' => ProductAttributeResource::collection($attributes),
+            'product' => (new ProductResource($product))->resolve(),
+            'variant' => (new ProductVariantResource($variant))->resolve(),
+            'attributes' => ProductAttributeResource::collection($attributes)->resolve(),
         ]);
     }
 
