@@ -5,6 +5,8 @@ namespace Modules\Product\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Product\Database\Factories\ProductFactory;
@@ -125,6 +127,89 @@ class Product extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'updated_by');
+    }
+
+    /**
+     * Relation to product variants.
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Relation to active variants only.
+     */
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()->where('is_active', true);
+    }
+
+    /**
+     * Relation to product attributes.
+     */
+    public function attributes(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductAttribute::class, 'product_product_attributes', 'product_id', 'attribute_id')
+            ->withPivot('sort_order', 'is_required')
+            ->withTimestamps()
+            ->orderBy('pivot_sort_order');
+    }
+
+    /**
+     * Get the default variant.
+     */
+    public function defaultVariant(): ?ProductVariant
+    {
+        return $this->variants()->where('is_default', true)->first()
+            ?? $this->variants()->first();
+    }
+
+    /**
+     * Check if product has variants.
+     */
+    public function hasVariants(): bool
+    {
+        return $this->variants()->exists();
+    }
+
+    /**
+     * Check if product has attributes.
+     */
+    public function hasAttributes(): bool
+    {
+        return $this->attributes()->exists();
+    }
+
+    /**
+     * Get total stock across all variants.
+     */
+    public function getTotalVariantStockAttribute(): int
+    {
+        if (!$this->hasVariants()) {
+            return $this->stock;
+        }
+
+        return $this->variants()->sum('stock');
+    }
+
+    /**
+     * Get price range for products with variants.
+     */
+    public function getPriceRangeAttribute(): array
+    {
+        if (!$this->hasVariants()) {
+            return ['min' => $this->effective_price, 'max' => $this->effective_price];
+        }
+
+        $prices = $this->activeVariants()
+            ->get()
+            ->map(fn ($v) => $v->display_price);
+
+        return [
+            'min' => $prices->min() ?? $this->effective_price,
+            'max' => $prices->max() ?? $this->effective_price,
+        ];
     }
 
     /**
