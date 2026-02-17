@@ -14,6 +14,7 @@ import {
     Layers,
     Tags,
     ArrowUpCircle,
+    Palette,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';

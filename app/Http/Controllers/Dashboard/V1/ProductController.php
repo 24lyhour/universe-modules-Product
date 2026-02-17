@@ -9,8 +9,10 @@ use Inertia\Response;
 use Modules\Outlet\Models\Outlet;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
+use Modules\Product\Http\Resources\ProductAttributeResource;
 use Modules\Product\Http\Resources\ProductResource;
 use Modules\Product\Models\Product;
+use Modules\Product\Models\ProductAttribute;
 use Modules\Product\Services\ProductService;
 use Momentum\Modal\Modal;
 
@@ -75,7 +77,13 @@ class ProductController extends Controller
      */
     public function show(Product $product): Response
     {
-        $product->load(['category', 'upsell', 'downsell']);
+        $product->load([
+            'outlet',
+            'upsell',
+            'downsell',
+            'variants.attributeValueRelations.attribute',
+            'attributes.values',
+        ]);
 
         return Inertia::render('product::dashboard/product/Show', [
             'product' => new ProductResource($product),
@@ -149,5 +157,50 @@ class ProductController extends Controller
 
         return redirect()->back()
             ->with('success', 'Product status updated.');
+    }
+
+    /**
+     * Show modal for managing product attributes.
+     */
+    public function manageAttributes(Product $product): Modal
+    {
+        $product->load('attributes');
+
+        $allAttributes = ProductAttribute::with('values')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $assignedAttributeIds = $product->attributes->pluck('id')->toArray();
+
+        return Inertia::modal('product::dashboard/product/ManageAttributes', [
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+            ],
+            'allAttributes' => ProductAttributeResource::collection($allAttributes),
+            'assignedAttributeIds' => $assignedAttributeIds,
+        ])->baseRoute('product.products.show', ['product' => $product->id]);
+    }
+
+    /**
+     * Sync attributes for a product.
+     */
+    public function syncAttributes(Request $request, Product $product)
+    {
+        $request->validate([
+            'attribute_ids' => ['array'],
+            'attribute_ids.*' => ['integer', 'exists:product_attributes,id'],
+        ]);
+
+        $syncData = [];
+        foreach ($request->attribute_ids ?? [] as $index => $attributeId) {
+            $syncData[$attributeId] = ['sort_order' => $index];
+        }
+
+        $product->attributes()->sync($syncData);
+
+        return redirect()->route('product.products.show', $product)
+            ->with('success', 'Product attributes updated successfully.');
     }
 }

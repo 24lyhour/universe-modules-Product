@@ -26,6 +26,12 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class])
         Route::patch('products/{product}/status', [ProductController::class, 'updateStatus'])
             ->name('product.products.update-status');
 
+        // Product Attributes Management (modal)
+        Route::get('products/{product}/attributes/manage', [ProductController::class, 'manageAttributes'])
+            ->name('product.products.attributes.manage');
+        Route::post('products/{product}/attributes/sync', [ProductController::class, 'syncAttributes'])
+            ->name('product.products.attributes.sync');
+
         // Product Variants (nested under products)
         Route::resource('products/{product}/variants', ProductVariantController::class)
             ->names('dashboard.product.variants')

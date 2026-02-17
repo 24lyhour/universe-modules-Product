@@ -1,6 +1,49 @@
 // Product Module Types
 
 export type ProductType = 'phone' | 'computer' | 'tablet' | 'accessory' | 'other';
+export type AttributeType = 'select' | 'color' | 'button';
+
+export interface ProductVariantAttributeValue {
+    id: number;
+    value: string;
+    label: string | null;
+    color_code: string | null;
+    attribute: {
+        id: number;
+        name: string;
+        type: AttributeType;
+    } | null;
+}
+
+export interface ProductVariantSimple {
+    id: number;
+    uuid: string;
+    sku: string | null;
+    name: string | null;
+    price: number | null;
+    sale_price: number | null;
+    stock: number;
+    is_default: boolean;
+    is_active: boolean;
+    images: string[];
+    attribute_values: Record<string, string> | null;
+    attribute_value_relations?: ProductVariantAttributeValue[];
+}
+
+export interface ProductAttributeSimple {
+    id: number;
+    uuid: string;
+    name: string;
+    type: AttributeType;
+    is_active: boolean;
+    values: {
+        id: number;
+        value: string;
+        label: string | null;
+        color_code: string | null;
+        is_active: boolean;
+    }[];
+}
 
 export interface Product {
     id: number;
@@ -38,6 +81,8 @@ export interface Product {
     attributes_count?: number;
     has_variants?: boolean;
     has_attributes?: boolean;
+    variants?: ProductVariantSimple[];
+    attributes?: ProductAttributeSimple[];
     created_at: string;
     updated_at: string;
 }
@@ -152,8 +197,6 @@ export interface ProductEditProps {
 }
 
 // ==================== VARIATION TYPES ====================
-
-export type AttributeType = 'select' | 'color' | 'button';
 
 export interface ProductAttribute {
     id: number;

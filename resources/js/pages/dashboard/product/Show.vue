@@ -8,6 +8,11 @@ import {
     Package,
     Star,
     AlertTriangle,
+    Layers,
+    Palette,
+    Check,
+    X,
+    Plus,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -21,6 +26,14 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { type BreadcrumbItem } from '@/types';
 import type { ProductShowProps } from '../../../types';
 
@@ -70,6 +83,14 @@ const handleDelete = () => {
         router.delete(`/dashboard/products/${props.product.id}`);
     }
 };
+
+const handleManageAttributes = () => {
+    router.visit(`/dashboard/products/${props.product.id}/attributes/manage`);
+};
+
+const handleManageVariants = () => {
+    router.visit(`/dashboard/products/${props.product.id}/variants`);
+};
 </script>
 
 <template>
@@ -107,8 +128,8 @@ const handleDelete = () => {
                                 </CardDescription>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Badge :variant="getStatusVariant(product.status)">
-                                    {{ product.status.replace('_', ' ') }}
+                                <Badge :variant="getStatusVariant(product.status ?? 'draft')">
+                                    {{ (product.status ?? 'draft').replace('_', ' ') }}
                                 </Badge>
                                 <Star
                                     v-if="product.is_featured"
@@ -147,6 +168,192 @@ const handleDelete = () => {
                                 <Package class="h-12 w-12 text-muted-foreground" />
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Attributes Section -->
+                <Card>
+                    <CardHeader>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <Palette class="h-5 w-5" />
+                                <CardTitle class="text-lg">Attributes</CardTitle>
+                            </div>
+                            <Button
+                                v-if="product.attributes && product.attributes.length > 0"
+                                variant="outline"
+                                size="sm"
+                                @click="handleManageAttributes"
+                            >
+                                <Pencil class="mr-2 h-4 w-4" />
+                                Edit
+                            </Button>
+                        </div>
+                        <CardDescription>
+                            {{ product.attributes?.length || 0 }} attribute(s) assigned
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent v-if="product.attributes && product.attributes.length > 0">
+                        <div class="space-y-4">
+                            <div
+                                v-for="attribute in product.attributes"
+                                :key="attribute.id"
+                                class="space-y-2"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-medium">{{ attribute.name }}</h4>
+                                    <div class="flex items-center gap-2">
+                                        <Badge variant="outline">{{ attribute.type }}</Badge>
+                                        <Badge :variant="attribute.is_active ? 'default' : 'secondary'">
+                                            {{ attribute.is_active ? 'Active' : 'Inactive' }}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template v-for="value in attribute.values" :key="value.id">
+                                        <Badge
+                                            v-if="attribute.type === 'color'"
+                                            variant="outline"
+                                            class="gap-2"
+                                        >
+                                            <span
+                                                v-if="value.color_code"
+                                                class="w-3 h-3 rounded-full border"
+                                                :style="{ backgroundColor: value.color_code }"
+                                            />
+                                            {{ value.label || value.value }}
+                                        </Badge>
+                                        <Badge v-else variant="secondary">
+                                            {{ value.label || value.value }}
+                                        </Badge>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardContent v-else class="flex flex-col items-center justify-center py-8 text-center">
+                        <Palette class="h-12 w-12 text-muted-foreground mb-3" />
+                        <p class="text-muted-foreground mb-3">No attributes assigned to this product</p>
+                        <Button variant="outline" size="sm" @click="handleManageAttributes">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Attributes
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <!-- Variants Section -->
+                <Card>
+                    <CardHeader>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <Layers class="h-5 w-5" />
+                                <CardTitle class="text-lg">Variants</CardTitle>
+                            </div>
+                            <Button
+                                v-if="product.variants && product.variants.length > 0"
+                                variant="outline"
+                                size="sm"
+                                @click="handleManageVariants"
+                            >
+                                <Pencil class="mr-2 h-4 w-4" />
+                                Edit
+                            </Button>
+                        </div>
+                        <CardDescription>
+                            {{ product.variants?.length || 0 }} variant(s) available
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent v-if="product.variants && product.variants.length > 0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Variant</TableHead>
+                                    <TableHead>SKU</TableHead>
+                                    <TableHead>Price</TableHead>
+                                    <TableHead>Stock</TableHead>
+                                    <TableHead>Default</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="variant in product.variants"
+                                    :key="variant.id"
+                                >
+                                    <TableCell>
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">
+                                                {{ variant.name || 'Unnamed Variant' }}
+                                            </span>
+                                            <div
+                                                v-if="variant.attribute_value_relations?.length"
+                                                class="flex flex-wrap gap-1 mt-1"
+                                            >
+                                                <Badge
+                                                    v-for="av in variant.attribute_value_relations"
+                                                    :key="av.id"
+                                                    variant="outline"
+                                                    class="text-xs"
+                                                >
+                                                    <span
+                                                        v-if="av.color_code"
+                                                        class="w-2 h-2 rounded-full mr-1"
+                                                        :style="{ backgroundColor: av.color_code }"
+                                                    />
+                                                    {{ av.attribute?.name }}: {{ av.label || av.value }}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <code class="text-xs bg-muted px-1 py-0.5 rounded">
+                                            {{ variant.sku || '-' }}
+                                        </code>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex flex-col">
+                                            <span>{{ formatCurrency(variant.price ?? product.price) }}</span>
+                                            <span
+                                                v-if="variant.sale_price"
+                                                class="text-xs text-green-600"
+                                            >
+                                                Sale: {{ formatCurrency(variant.sale_price) }}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span
+                                            :class="{
+                                                'text-red-600': variant.stock === 0,
+                                                'text-green-600': variant.stock > 0,
+                                            }"
+                                        >
+                                            {{ variant.stock }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Check
+                                            v-if="variant.is_default"
+                                            class="h-4 w-4 text-green-600"
+                                        />
+                                        <X v-else class="h-4 w-4 text-muted-foreground" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge :variant="variant.is_active ? 'default' : 'secondary'">
+                                            {{ variant.is_active ? 'Active' : 'Inactive' }}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                    <CardContent v-else class="flex flex-col items-center justify-center py-8 text-center">
+                        <Layers class="h-12 w-12 text-muted-foreground mb-3" />
+                        <p class="text-muted-foreground mb-3">No variants created for this product</p>
+                        <Button variant="outline" size="sm" @click="handleManageVariants">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Variants
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

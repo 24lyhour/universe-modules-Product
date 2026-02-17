@@ -21,10 +21,27 @@ class ProductAttributeResource extends JsonResource
             'description' => $this->description,
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
-            'values' => ProductAttributeValueResource::collection($this->whenLoaded('values')),
+            'values' => $this->whenLoaded('values', fn () => $this->formatValues()),
             'values_count' => $this->whenCounted('values'),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    /**
+     * Format attribute values as array.
+     */
+    private function formatValues(): array
+    {
+        return $this->values->map(fn ($value) => [
+            'id' => $value->id,
+            'value' => $value->value,
+            'label' => $value->label,
+            'color_code' => $value->color_code,
+            'image_url' => $value->image_url,
+            'price_adjustment' => (float) $value->price_adjustment,
+            'sort_order' => $value->sort_order,
+            'is_active' => $value->is_active,
+        ])->toArray();
     }
 }
