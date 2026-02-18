@@ -74,6 +74,18 @@ class ProductServiceProvider extends ServiceProvider
                 'dashboard.product.attributes.index',
                 'Tags'
             );
+
+            // Add-ons submenu
+            MenuService::addSubmenuItem(
+                'primary',
+                'product',
+                __('Add-ons'),
+                '/dashboard/products/addons',
+                30,
+                null,
+                'dashboard.product.addons.index',
+                'PlusCircle'
+            );
         });
     }
 
