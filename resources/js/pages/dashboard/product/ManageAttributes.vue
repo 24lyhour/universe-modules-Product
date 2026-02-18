@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ModalForm } from '@/components/shared';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useForm } from '@inertiajs/vue3';
-import { Check, Plus, X } from 'lucide-vue-next';
+import { useForm, Link } from '@inertiajs/vue3';
+import { Check, Plus, X, ExternalLink } from 'lucide-vue-next';
 import { useModal } from 'momentum-modal';
 import { computed, ref } from 'vue';
 import type { ProductAttribute } from '../../../types';
@@ -237,13 +238,25 @@ const handleCancel = () => {
                 </div>
 
                 <!-- Empty state -->
-                <div v-if="allAttributes.length === 0" class="text-center py-8 text-muted-foreground">
-                    No attributes available. Create attributes first.
+                <div v-if="allAttributes.length === 0" class="text-center py-8">
+                    <p class="text-muted-foreground mb-4">No attributes available. Create attributes first.</p>
+                    <Button variant="outline" as-child>
+                        <Link href="/dashboard/products/attributes/create">
+                            <ExternalLink class="mr-2 h-4 w-4" />
+                            Create New Attribute
+                        </Link>
+                    </Button>
                 </div>
 
                 <!-- All assigned state -->
-                <div v-if="allAttributes.length > 0 && availableAttributes.length === 0 && assignedAttributes.length > 0" class="text-center py-4 text-muted-foreground text-sm">
-                    All available attributes are assigned to this product.
+                <div v-if="allAttributes.length > 0 && availableAttributes.length === 0 && assignedAttributes.length > 0" class="text-center py-4">
+                    <p class="text-muted-foreground text-sm mb-3">All available attributes are assigned to this product.</p>
+                    <Button variant="outline" size="sm" as-child>
+                        <Link href="/dashboard/products/attributes/create">
+                            <ExternalLink class="mr-2 h-3 w-3" />
+                            Create More Attributes
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </ScrollArea>

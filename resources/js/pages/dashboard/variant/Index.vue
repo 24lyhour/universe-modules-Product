@@ -10,6 +10,7 @@ import {
     ArrowLeft,
     Star,
     AlertTriangle,
+    Settings2,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -26,6 +27,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { ProductVariantIndexProps, ProductVariant } from '../../../types';
 
 const props = defineProps<ProductVariantIndexProps>();
+const { product } = props;
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -171,12 +173,20 @@ const getAttributeDisplay = (variant: ProductVariant) => {
                         <p class="text-muted-foreground">Manage variants for: {{ product.name }}</p>
                     </div>
                 </div>
-                <Button as-child>
-                    <Link :href="`/dashboard/products/${product.id}/variants/create`">
-                        <Plus class="mr-2 h-4 w-4" />
-                        Add Variant
-                    </Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" as-child>
+                        <Link :href="`/dashboard/products/${product.id}/attributes/manage`">
+                            <Settings2 class="mr-2 h-4 w-4" />
+                            Manage Attributes
+                        </Link>
+                    </Button>
+                    <Button as-child>
+                        <Link :href="`/dashboard/products/${product.id}/variants/create`">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Variant
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <!-- Stats Cards -->

@@ -236,6 +236,39 @@ class Product extends Model
     }
 
     /**
+     * Relation to product add-ons.
+     */
+    public function addOns(): HasMany
+    {
+        return $this->hasMany(ProductAddOn::class, 'product_id')
+            ->orderBy('sort_order');
+    }
+
+    /**
+     * Relation to active add-ons only.
+     */
+    public function activeAddOns(): HasMany
+    {
+        return $this->addOns()->where('is_active', true);
+    }
+
+    /**
+     * Get products that have this product as an add-on.
+     */
+    public function usedAsAddOnIn(): HasMany
+    {
+        return $this->hasMany(ProductAddOn::class, 'add_on_product_id');
+    }
+
+    /**
+     * Check if product has add-ons.
+     */
+    public function hasAddOns(): bool
+    {
+        return $this->addOns()->exists();
+    }
+
+    /**
      * Get the default variant.
      */
     public function defaultVariant(): ?ProductVariant

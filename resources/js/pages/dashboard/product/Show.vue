@@ -13,6 +13,7 @@ import {
     Check,
     X,
     Plus,
+    PackagePlus,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -90,6 +91,10 @@ const handleManageAttributes = () => {
 
 const handleManageVariants = () => {
     router.visit(`/dashboard/products/${props.product.id}/variants`);
+};
+
+const handleManageAddOns = () => {
+    router.visit(`/dashboard/products/${props.product.id}/addons`);
 };
 </script>
 
@@ -353,6 +358,37 @@ const handleManageVariants = () => {
                         <Button variant="outline" size="sm" @click="handleManageVariants">
                             <Plus class="mr-2 h-4 w-4" />
                             Add Variants
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <!-- Add-ons Section -->
+                <Card>
+                    <CardHeader>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <PackagePlus class="h-5 w-5" />
+                                <CardTitle class="text-lg">Add-ons</CardTitle>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                @click="handleManageAddOns"
+                            >
+                                <Pencil class="mr-2 h-4 w-4" />
+                                Manage
+                            </Button>
+                        </div>
+                        <CardDescription>
+                            Configure add-on products for this item
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="flex flex-col items-center justify-center py-8 text-center">
+                        <PackagePlus class="h-12 w-12 text-muted-foreground mb-3" />
+                        <p class="text-muted-foreground mb-3">Manage add-on products</p>
+                        <Button variant="outline" size="sm" @click="handleManageAddOns">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Manage Add-ons
                         </Button>
                     </CardContent>
                 </Card>

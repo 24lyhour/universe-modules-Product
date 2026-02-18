@@ -86,7 +86,7 @@ class ProductController extends Controller
         ]);
 
         return Inertia::render('product::dashboard/product/Show', [
-            'product' => new ProductResource($product),
+            'product' => (new ProductResource($product))->resolve(),
         ]);
     }
 
@@ -178,7 +178,7 @@ class ProductController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
             ],
-            'allAttributes' => ProductAttributeResource::collection($allAttributes),
+            'allAttributes' => ProductAttributeResource::collection($allAttributes)->resolve(),
             'assignedAttributeIds' => $assignedAttributeIds,
         ])->baseRoute('product.products.show', ['product' => $product->id]);
     }

@@ -263,7 +263,7 @@ const formatCurrency = (value: number) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="sale_price">Sale Price</Label>
+                    <Label for="sale_price">Sale Price <span class="text-destructive">*</span></Label>
                     <Input
                         id="sale_price"
                         :model-value="model.sale_price ?? undefined"

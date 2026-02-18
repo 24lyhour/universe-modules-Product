@@ -44,7 +44,31 @@ const form = useForm<ProductFormData>({
 });
 
 // Use shared validation composable
-const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name']);
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price']);
+
+/**
+ * Generate SKU from product name
+ */
+const generateSku = (name: string): string => {
+    if (!name) return '';
+    const prefix = 'PRD';
+    const slug = name
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 6);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}-${slug}-${random}`;
+};
+
+// Auto-generate SKU when name changes
+watch(
+    () => form.name,
+    (newName) => {
+        if (newName && !form.sku) {
+            form.sku = generateSku(newName);
+        }
+    }
+);
 
 /**
  * get form data
@@ -71,19 +95,22 @@ const getFormData = () => ({
 
 // Watch form changes to validate in real-time
 watch(
-    () => [form.name, form.price, form.stock],
+    () => [form.name, form.price, form.sale_price, form.stock],
     () => {
-        if (form.name || form.price > 0 || form.stock > 0) {
+        if (form.name || form.price > 0 || (form.sale_price && form.sale_price > 0)) {
             validateForm(getFormData());
         }
     }
 );
 
 /**
- * check the validation form requeired
+ * Check the validation form required - name, price and sale_price are required
  */
 const isFormInvalid = computed(() => {
-    return !form.name || form.name.trim() === '' || form.price < 0 || form.stock < 0;
+    const nameValid = form.name && form.name.trim() !== '';
+    const priceValid = form.price > 0;
+    const salePriceValid = form.sale_price !== null && form.sale_price > 0;
+    return !nameValid || !priceValid || !salePriceValid;
 });
 
 const handleSubmit = () => {

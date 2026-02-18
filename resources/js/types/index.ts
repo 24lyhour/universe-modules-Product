@@ -325,6 +325,72 @@ export interface ProductUpsellEditProps {
     upsell: ProductUpsell;
 }
 
+// ==================== ADD-ON TYPES ====================
+
+export interface ProductAddOn {
+    id: number;
+    uuid: string;
+    product_id: number;
+    add_on_product_id: number;
+    price_adjustment: number;
+    formatted_price_adjustment: string;
+    final_price: number;
+    max_quantity: number;
+    sort_order: number;
+    is_required: boolean;
+    is_active: boolean;
+    add_on_product?: {
+        id: number;
+        uuid: string;
+        name: string;
+        slug: string;
+        sku: string | null;
+        price: number;
+        sale_price: number | null;
+        effective_price: number;
+        is_on_sale: boolean;
+        stock: number;
+        is_in_stock: boolean;
+        images: string[];
+        status: string;
+    };
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductAddOnFormData {
+    add_on_product_id: number | null;
+    price_adjustment: number;
+    max_quantity: number;
+    sort_order: number;
+    is_required: boolean;
+    is_active: boolean;
+}
+
+export interface ProductAddOnStats {
+    total: number;
+    required: number;
+    optional: number;
+    active: number;
+}
+
+export interface ProductAddOnIndexProps {
+    product: ProductSimple;
+    addOns: ProductAddOn[];
+    availableProducts: ProductSimple[];
+    stats: ProductAddOnStats;
+}
+
+export interface ProductAddOnCreateProps {
+    product: ProductSimple;
+    availableProducts: ProductSimple[];
+}
+
+export interface ProductAddOnEditProps {
+    product: ProductSimple;
+    addOn: ProductAddOn;
+}
+
 // Extended Product interface with variations
 export interface ProductWithVariations extends Product {
     variants?: ProductVariant[];
