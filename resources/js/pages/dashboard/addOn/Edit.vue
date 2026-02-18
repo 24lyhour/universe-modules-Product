@@ -23,6 +23,9 @@ const isOpen = computed({
 
 const form = useForm({
     add_on_product_id: props.addOn.add_on_product_id,
+    name: props.addOn.name ?? '',
+    description: props.addOn.description ?? '',
+    image_url: props.addOn.image_url ?? '',
     price_adjustment: props.addOn.price_adjustment,
     max_quantity: props.addOn.max_quantity,
     sort_order: props.addOn.sort_order,

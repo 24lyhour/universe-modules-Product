@@ -3,58 +3,64 @@
 namespace Modules\Product\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Product\Actions\Dashboard\V1\CreateProductAddOnAction;
 use Modules\Product\Actions\Dashboard\V1\DeleteProductAddOnAction;
+use Modules\Product\Actions\Dashboard\V1\ReorderProductAddOnsAction;
+use Modules\Product\Actions\Dashboard\V1\ToggleProductAddOnStatusAction;
 use Modules\Product\Actions\Dashboard\V1\UpdateProductAddOnAction;
+use Modules\Product\Http\Requests\Dashboard\V1\AddOn\ReorderProductAddOnsRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\AddOn\StoreProductAddOnRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\AddOn\UpdateProductAddOnRequest;
 use Modules\Product\Http\Resources\ProductAddOnResource;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAddOn;
+use Modules\Product\Services\ProductAddOnService;
 use Momentum\Modal\Modal;
 
 class ProductAddOnController extends Controller
 {
     public function __construct(
+        protected ProductAddOnService $service,
         protected CreateProductAddOnAction $createAction,
         protected UpdateProductAddOnAction $updateAction,
         protected DeleteProductAddOnAction $deleteAction,
+        protected ToggleProductAddOnStatusAction $toggleStatusAction,
+        protected ReorderProductAddOnsAction $reorderAction,
     ) {}
+
+    /**
+     * Display all add-ons across all products.
+     */
+    public function indexAll(Request $request): Response
+    {
+        $perPage = $request->integer('per_page', 10);
+        $search = $request->string('search')->toString();
+
+        $addOns = $this->service->getPaginatedAddOns($perPage, $search ?: null);
+
+        return Inertia::render('product::dashboard/addOn/Index', [
+            'addOns' => ProductAddOnResource::collection($addOns)->response()->getData(true),
+            'filters' => $request->only(['search', 'per_page']),
+            'stats' => $this->service->getGlobalStats(),
+        ]);
+    }
 
     /**
      * Display a listing of add-ons for a product.
      */
     public function index(Product $product): Response
     {
-        $addOns = $product->addOns()
-            ->with('addOnProduct')
-            ->orderBy('sort_order')
-            ->get();
+        $addOns = $this->service->getProductAddOns($product);
 
-        $availableProducts = Product::select('id', 'name', 'price', 'sku', 'status')
-            ->where('id', '!=', $product->id)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('product::dashboard/addOn/Index', [
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sku' => $product->sku,
-                'price' => (float) $product->price,
-            ],
+        return Inertia::render('product::dashboard/addOn/ProductIndex', [
+            'product' => $this->service->formatProductData($product),
             'addOns' => ProductAddOnResource::collection($addOns)->resolve(),
-            'availableProducts' => $availableProducts,
-            'stats' => [
-                'total' => $addOns->count(),
-                'required' => $addOns->where('is_required', true)->count(),
-                'optional' => $addOns->where('is_required', false)->count(),
-                'active' => $addOns->where('is_active', true)->count(),
-            ],
+            'availableProducts' => $this->service->getAvailableProducts($product),
+            'stats' => $this->service->getProductStats($addOns),
         ]);
     }
 
@@ -63,29 +69,16 @@ class ProductAddOnController extends Controller
      */
     public function create(Product $product): Modal
     {
-        $existingIds = $product->addOns()->pluck('add_on_product_id')->toArray();
-
-        $availableProducts = Product::select('id', 'name', 'price', 'sku', 'status')
-            ->where('id', '!=', $product->id)
-            ->whereNotIn('id', $existingIds)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-
         return Inertia::modal('product::dashboard/addOn/Create', [
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'price' => (float) $product->price,
-            ],
-            'availableProducts' => $availableProducts,
+            'product' => $this->service->formatProductData($product),
+            'availableProducts' => $this->service->getAvailableProducts($product, excludeExisting: true),
         ])->baseRoute('dashboard.product.addons.index', ['product' => $product->id]);
     }
 
     /**
      * Store a newly created add-on.
      */
-    public function store(StoreProductAddOnRequest $request, Product $product)
+    public function store(StoreProductAddOnRequest $request, Product $product): RedirectResponse
     {
         $this->createAction->execute($product, $request->validated());
 
@@ -101,11 +94,7 @@ class ProductAddOnController extends Controller
         $addon->load('addOnProduct');
 
         return Inertia::modal('product::dashboard/addOn/Edit', [
-            'product' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'price' => (float) $product->price,
-            ],
+            'product' => $this->service->formatProductData($product),
             'addOn' => (new ProductAddOnResource($addon))->resolve(),
         ])->baseRoute('dashboard.product.addons.index', ['product' => $product->id]);
     }
@@ -113,7 +102,7 @@ class ProductAddOnController extends Controller
     /**
      * Update the specified add-on.
      */
-    public function update(UpdateProductAddOnRequest $request, Product $product, ProductAddOn $addon)
+    public function update(UpdateProductAddOnRequest $request, Product $product, ProductAddOn $addon): RedirectResponse
     {
         $this->updateAction->execute($addon, $request->validated());
 
@@ -124,7 +113,7 @@ class ProductAddOnController extends Controller
     /**
      * Remove the specified add-on.
      */
-    public function destroy(Product $product, ProductAddOn $addon)
+    public function destroy(Product $product, ProductAddOn $addon): RedirectResponse
     {
         $this->deleteAction->execute($addon);
 
@@ -135,9 +124,9 @@ class ProductAddOnController extends Controller
     /**
      * Toggle the active status.
      */
-    public function toggleStatus(Product $product, ProductAddOn $addon)
+    public function toggleStatus(Product $product, ProductAddOn $addon): RedirectResponse
     {
-        $addon->update(['is_active' => !$addon->is_active]);
+        $this->toggleStatusAction->execute($addon);
 
         return redirect()->back()
             ->with('success', 'Status updated successfully.');
@@ -146,21 +135,46 @@ class ProductAddOnController extends Controller
     /**
      * Reorder add-ons.
      */
-    public function reorder(Request $request, Product $product)
+    public function reorder(ReorderProductAddOnsRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.id' => ['required', 'integer', 'exists:product_add_ons,id'],
-            'items.*.sort_order' => ['required', 'integer', 'min:0'],
-        ]);
-
-        foreach ($validated['items'] as $item) {
-            ProductAddOn::where('id', $item['id'])
-                ->where('product_id', $product->id)
-                ->update(['sort_order' => $item['sort_order']]);
-        }
+        $this->reorderAction->execute($product, $request->validated()['items']);
 
         return redirect()->back()
             ->with('success', 'Order updated successfully.');
+    }
+
+    /**
+     * Show the standalone form for creating a new add-on (from global add-ons page).
+     */
+    public function createStandalone(): Modal
+    {
+        return Inertia::modal('product::dashboard/addOn/CreateStandalone', [
+            'parentProducts' => $this->service->getActiveProducts(),
+        ])->baseRoute('dashboard.product.addons.all');
+    }
+
+    /**
+     * Store a newly created add-on from standalone form.
+     */
+    public function storeStandalone(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
+            'price_adjustment' => ['required', 'numeric'],
+            'max_quantity' => ['required', 'integer', 'min:1'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_required' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        $product = Product::findOrFail($validated['product_id']);
+
+        $this->createAction->execute($product, $validated);
+
+        return redirect()->route('dashboard.product.addons.all')
+            ->with('success', 'Add-on created successfully.');
     }
 }

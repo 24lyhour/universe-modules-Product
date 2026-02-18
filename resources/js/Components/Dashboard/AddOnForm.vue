@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/shared';
 import {
     Select,
     SelectContent,
@@ -36,6 +38,14 @@ const selectedProductId = computed({
     },
 });
 
+// Computed for single image (ImageUpload expects string[])
+const imageUrlArray = computed({
+    get: () => model.value.image_url ? [model.value.image_url] : [],
+    set: (value: string[]) => {
+        model.value.image_url = value.length > 0 ? value[0] : '';
+    },
+});
+
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -62,7 +72,7 @@ const formatCurrency = (value: number) => {
                     <SelectTrigger id="add_on_product_id">
                         <SelectValue placeholder="Select a product" />
                     </SelectTrigger>
-                    <SelectContent class="z-200">
+                    <SelectContent class="z-9999 max-h-60 overflow-y-auto">
                         <SelectItem
                             v-for="prod in availableProducts"
                             :key="prod.id"
@@ -103,6 +113,63 @@ const formatCurrency = (value: number) => {
             </div>
         </div>
 
+        <!-- Details Section -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Details</h3>
+                <p class="text-sm text-muted-foreground">
+                    Custom name, description, and image for this add-on
+                </p>
+            </div>
+            <Separator />
+
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <Label for="name">Name</Label>
+                    <Input
+                        id="name"
+                        v-model="model.name"
+                        placeholder="Custom add-on name (optional)"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Leave empty to use the product name
+                    </p>
+                    <p v-if="model.errors.name" class="text-sm text-destructive">
+                        {{ model.errors.name }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="description">Description</Label>
+                    <Textarea
+                        id="description"
+                        v-model="model.description"
+                        placeholder="Custom description for this add-on (optional)"
+                        rows="3"
+                    />
+                    <p v-if="model.errors.description" class="text-sm text-destructive">
+                        {{ model.errors.description }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <ImageUpload
+                        v-model="imageUrlArray"
+                        label="Image"
+                        :multiple="false"
+                        :max-files="1"
+                        accept="image/*"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Custom image for this add-on (optional)
+                    </p>
+                    <p v-if="model.errors.image_url" class="text-sm text-destructive">
+                        {{ model.errors.image_url }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Section -->
         <div class="space-y-4">
             <div>
@@ -115,13 +182,14 @@ const formatCurrency = (value: number) => {
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="space-y-2">
-                    <Label for="price_adjustment">Price Adjustment ($)</Label>
+                    <Label for="price_adjustment">Price Adjustment ($) <span class="text-destructive">*</span></Label>
                     <Input
                         id="price_adjustment"
                         v-model.number="model.price_adjustment"
                         type="number"
                         step="0.01"
                         placeholder="0.00"
+                        required
                     />
                     <p class="text-xs text-muted-foreground">
                         Additional charge (+) or discount (-)
@@ -132,13 +200,14 @@ const formatCurrency = (value: number) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="max_quantity">Max Quantity</Label>
+                    <Label for="max_quantity">Max Quantity <span class="text-destructive">*</span></Label>
                     <Input
                         id="max_quantity"
                         v-model.number="model.max_quantity"
                         type="number"
                         min="1"
                         placeholder="1"
+                        required
                     />
                     <p class="text-xs text-muted-foreground">
                         Maximum quantity customer can add

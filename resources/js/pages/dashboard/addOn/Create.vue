@@ -25,6 +25,9 @@ const isOpen = computed({
 
 const form = useForm<ProductAddOnFormData>({
     add_on_product_id: null,
+    name: '',
+    description: '',
+    image_url: '',
     price_adjustment: 0,
     max_quantity: 1,
     sort_order: 0,
@@ -35,12 +38,15 @@ const form = useForm<ProductAddOnFormData>({
 // Use shared validation composable
 const { validateForm, validateAndSubmit, createIsFormInvalid } = useFormValidation(
     addOnSchema,
-    ['add_on_product_id'] // Required fields
+    ['add_on_product_id', 'price_adjustment', 'max_quantity'] // Required fields
 );
 
 // Get form data for validation
 const getFormData = () => ({
     add_on_product_id: form.add_on_product_id,
+    name: form.name,
+    description: form.description,
+    image_url: form.image_url,
     price_adjustment: form.price_adjustment,
     max_quantity: form.max_quantity,
     sort_order: form.sort_order,

@@ -17,6 +17,9 @@ class ProductAddOnResource extends JsonResource
             'uuid' => $this->uuid,
             'product_id' => $this->product_id,
             'add_on_product_id' => $this->add_on_product_id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'image_url' => $this->image_url,
             'price_adjustment' => (float) $this->price_adjustment,
             'formatted_price_adjustment' => $this->formatted_price_adjustment,
             'final_price' => $this->final_price,
@@ -24,6 +27,13 @@ class ProductAddOnResource extends JsonResource
             'sort_order' => $this->sort_order,
             'is_required' => $this->is_required,
             'is_active' => $this->is_active,
+            'product' => $this->whenLoaded('product', function () {
+                return [
+                    'id' => $this->product->id,
+                    'name' => $this->product->name,
+                    'sku' => $this->product->sku,
+                ];
+            }),
             'add_on_product' => $this->whenLoaded('addOnProduct', function () {
                 return [
                     'id' => $this->addOnProduct->id,

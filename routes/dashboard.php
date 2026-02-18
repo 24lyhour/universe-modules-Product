@@ -18,6 +18,14 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class])
         Route::patch('products/attributes/{attribute}/toggle-status', [ProductAttributeController::class, 'toggleStatus'])
             ->name('dashboard.product.attributes.toggle-status');
 
+        // Product Add-ons standalone routes (must be before products resource to avoid conflict)
+        Route::get('products/addons', [ProductAddOnController::class, 'indexAll'])
+            ->name('dashboard.product.addons.all');
+        Route::get('products/addons/create', [ProductAddOnController::class, 'createStandalone'])
+            ->name('dashboard.product.addons.create-standalone');
+        Route::post('products/addons', [ProductAddOnController::class, 'storeStandalone'])
+            ->name('dashboard.product.addons.store-standalone');
+
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');
 

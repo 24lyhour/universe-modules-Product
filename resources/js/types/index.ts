@@ -25,7 +25,7 @@ export interface ProductVariantSimple {
     stock: number;
     is_default: boolean;
     is_active: boolean;
-    images: string[];
+    images: string[] | null;
     attribute_values: Record<string, string> | null;
     attribute_value_relations?: ProductVariantAttributeValue[];
 }
@@ -331,7 +331,10 @@ export interface ProductAddOn {
     id: number;
     uuid: string;
     product_id: number;
-    add_on_product_id: number;
+    add_on_product_id: number | null;
+    name: string;
+    description: string | null;
+    image_url: string | null;
     price_adjustment: number;
     formatted_price_adjustment: string;
     final_price: number;
@@ -360,6 +363,9 @@ export interface ProductAddOn {
 
 export interface ProductAddOnFormData {
     add_on_product_id: number | null;
+    name: string;
+    description: string;
+    image_url: string;
     price_adjustment: number;
     max_quantity: number;
     sort_order: number;
@@ -391,8 +397,26 @@ export interface ProductAddOnEditProps {
     addOn: ProductAddOn;
 }
 
+export interface ProductAddOnWithProduct extends ProductAddOn {
+    product?: {
+        id: number;
+        name: string;
+        sku: string | null;
+    };
+}
+
+export interface ProductAddOnIndexAllProps {
+    addOns: PaginatedResponse<ProductAddOnWithProduct>;
+    filters: {
+        search?: string;
+        per_page?: number;
+    };
+    stats: ProductAddOnStats;
+}
+
 // Extended Product interface with variations
-export interface ProductWithVariations extends Product {
+// Using Omit to exclude variants and attributes from Product before redefining them with full types
+export interface ProductWithVariations extends Omit<Product, 'variants' | 'attributes'> {
     variants?: ProductVariant[];
     attributes?: ProductAttribute[];
     has_variants?: boolean;

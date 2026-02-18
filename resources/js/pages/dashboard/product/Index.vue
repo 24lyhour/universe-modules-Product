@@ -14,6 +14,7 @@ import {
     Layers,
     Tags,
     ArrowUpCircle,
+    PlusCircle,
     Palette,
 } from 'lucide-vue-next';
 
@@ -103,6 +104,11 @@ const tableActions: TableAction<Product>[] = [
         label: 'Manage Upsells',
         icon: ArrowUpCircle,
         onClick: (item) => router.visit(`/dashboard/products/${item.id}/upsells`),
+    },
+    {
+        label: 'Manage Add-ons',
+        icon: PlusCircle,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/addons`),
     },
     {
         label: 'Delete',
