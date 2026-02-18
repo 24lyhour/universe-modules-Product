@@ -39,6 +39,8 @@ const form = useForm<ProductFormData>({
     images: props.product.images || [],
     category_id: props.product.category_id,
     outlet_id: props.product.outlet_id,
+    upsale_id: props.product.upsale_id,
+    down_sale_id: props.product.down_sale_id,
 });
 
 // Use shared validation composable
@@ -61,6 +63,8 @@ const getFormData = () => ({
     images: form.images || null,
     category_id: form.category_id,
     outlet_id: form.outlet_id,
+    upsale_id: form.upsale_id,
+    down_sale_id: form.down_sale_id,
 });
 
 // Watch form changes to validate in real-time
@@ -101,6 +105,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" />
+        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" :products="props.products" />
     </ModalForm>
 </template>

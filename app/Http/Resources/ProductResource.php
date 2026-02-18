@@ -48,8 +48,72 @@ class ProductResource extends JsonResource
                     'name' => $this->outlet->name,
                 ];
             }),
+            'upsale_id' => $this->upsale_id,
+            'upsell' => $this->whenLoaded('upsell', function () {
+                return [
+                    'id' => $this->upsell->id,
+                    'name' => $this->upsell->name,
+                    'price' => (float) $this->upsell->price,
+                    'sku' => $this->upsell->sku,
+                ];
+            }),
+            'down_sale_id' => $this->down_sale_id,
+            'downsell' => $this->whenLoaded('downsell', function () {
+                return [
+                    'id' => $this->downsell->id,
+                    'name' => $this->downsell->name,
+                    'price' => (float) $this->downsell->price,
+                    'sku' => $this->downsell->sku,
+                ];
+            }),
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
+            'variants_count' => $this->whenCounted('variants'),
+            'attributes_count' => $this->whenCounted('attributes'),
+            'has_variants' => $this->when($this->variants_count !== null, fn() => $this->variants_count > 0),
+            'has_attributes' => $this->when($this->attributes_count !== null, fn() => $this->attributes_count > 0),
+            'variants' => $this->whenLoaded('variants', fn() => $this->variants->map(fn($variant) => [
+                'id' => $variant->id,
+                'uuid' => $variant->uuid,
+                'sku' => $variant->sku,
+                'name' => $variant->name,
+                'price' => $variant->price ? (float) $variant->price : null,
+                'sale_price' => $variant->sale_price ? (float) $variant->sale_price : null,
+                'stock' => $variant->stock,
+                'is_default' => $variant->is_default,
+                'is_active' => $variant->is_active,
+                'images' => $variant->images ?? [],
+                'attribute_values' => $variant->attribute_values,
+                'attribute_value_relations' => $variant->relationLoaded('attributeValueRelations')
+                    ? $variant->attributeValueRelations->map(fn($av) => [
+                        'id' => $av->id,
+                        'value' => $av->value,
+                        'label' => $av->label,
+                        'color_code' => $av->color_code,
+                        'attribute' => $av->relationLoaded('attribute') ? [
+                            'id' => $av->attribute->id,
+                            'name' => $av->attribute->name,
+                            'type' => $av->attribute->type,
+                        ] : null,
+                    ])
+                    : [],
+            ])),
+            'attributes' => $this->whenLoaded('attributes', fn() => $this->attributes->map(fn($attr) => [
+                'id' => $attr->id,
+                'uuid' => $attr->uuid,
+                'name' => $attr->name,
+                'type' => $attr->type,
+                'is_active' => $attr->is_active,
+                'values' => $attr->relationLoaded('values')
+                    ? $attr->values->map(fn($v) => [
+                        'id' => $v->id,
+                        'value' => $v->value,
+                        'label' => $v->label,
+                        'color_code' => $v->color_code,
+                        'is_active' => $v->is_active,
+                    ])
+                    : [],
+            ])),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, type VNode } from 'vue';
 import {
     Plus,
     Eye,
@@ -11,6 +11,10 @@ import {
     PackageX,
     Star,
     AlertTriangle,
+    Layers,
+    Tags,
+    ArrowUpCircle,
+    Palette,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -30,15 +34,18 @@ import {
     type TableColumn,
     type TableAction,
 } from '@/components/shared';
-import { type BreadcrumbItem } from '@/types';
 import type { Product, ProductIndexProps } from '../../../types';
 
-const props = defineProps<ProductIndexProps>();
+// Persistent layout required for momentum-modal
+defineOptions({
+    layout: (h: (type: unknown, props: unknown, children: unknown) => VNode, page: VNode) =>
+        h(AppLayout, { breadcrumbs: [
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Products', href: '/dashboard/products' },
+        ]}, () => page),
+});
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Products', href: '/dashboard/products' },
-];
+const props = defineProps<ProductIndexProps>();
 
 // Search and filters
 const searchQuery = ref(props.filters.search || '');
@@ -60,10 +67,11 @@ const pagination = computed(() => ({
 
 // Table columns
 const columns: TableColumn<Product>[] = [
-    { key: 'name', label: 'Product', width: '30%' },
+    { key: 'name', label: 'Product', width: '25%' },
     { key: 'sku', label: 'SKU' },
     { key: 'price', label: 'Price', align: 'right' },
     { key: 'stock', label: 'Stock', align: 'center' },
+    { key: 'variants', label: 'Variants', align: 'center' },
     { key: 'status', label: 'Status' },
     { key: 'is_featured', label: 'Featured', align: 'center' },
     { key: 'created_at', label: 'Created' },
@@ -85,6 +93,16 @@ const tableActions: TableAction<Product>[] = [
         label: 'Toggle Featured',
         icon: Star,
         onClick: (item) => toggleFeatured(item),
+    },
+    {
+        label: 'Manage Variants',
+        icon: Layers,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/variants`),
+    },
+    {
+        label: 'Manage Upsells',
+        icon: ArrowUpCircle,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/upsells`),
     },
     {
         label: 'Delete',
@@ -217,10 +235,9 @@ const tableData = computed(() => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Products" />
+    <Head title="Products" />
 
-        <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="flex h-full flex-1 flex-col gap-6 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -388,6 +405,33 @@ const tableData = computed(() => {
                     </div>
                 </template>
 
+                <!-- Custom cell for variants -->
+                <template #cell-variants="{ item }">
+                    <div class="flex items-center justify-center gap-2">
+                        <div v-if="(item.variants_count ?? 0) > 0" class="flex items-center gap-1.5">
+                            <Badge variant="secondary" class="tabular-nums">
+                                <Layers class="mr-1 h-3 w-3" />
+                                {{ item.variants_count ?? 0 }}
+                            </Badge>
+                            <Link
+                                :href="`/dashboard/products/${item.id}/variants`"
+                                class="text-xs text-primary hover:underline"
+                            >
+                                Manage
+                            </Link>
+                        </div>
+                        <div v-else class="flex items-center gap-1.5">
+                            <span class="text-muted-foreground">-</span>
+                            <Link
+                                :href="`/dashboard/products/${item.id}/variants/create`"
+                                class="text-xs text-primary hover:underline"
+                            >
+                                Add
+                            </Link>
+                        </div>
+                    </div>
+                </template>
+
                 <!-- Custom cell for status badge -->
                 <template #cell-status="{ item }">
                     <Badge :variant="getStatusVariant(item.status)">
@@ -413,17 +457,16 @@ const tableData = computed(() => {
                     </span>
                 </template>
             </TableReusable>
-        </div>
+    </div>
 
-        <!-- Delete Confirmation Modal -->
-        <ModalConfirm
-            v-model:open="isDeleteModalOpen"
-            title="Delete Product"
-            :description="`Are you sure you want to delete '${selectedProduct?.name}'? This action cannot be undone.`"
-            confirm-text="Delete"
-            variant="danger"
-            :loading="isDeleting"
-            @confirm="handleDelete"
-        />
-    </AppLayout>
+    <!-- Delete Confirmation Modal -->
+    <ModalConfirm
+        v-model:open="isDeleteModalOpen"
+        title="Delete Product"
+        :description="`Are you sure you want to delete '${selectedProduct?.name}'? This action cannot be undone.`"
+        confirm-text="Delete"
+        variant="danger"
+        :loading="isDeleting"
+        @confirm="handleDelete"
+    />
 </template>

@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
@@ -13,8 +12,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ImageUpload } from '@/components/shared';
+import TiptapEditor from '@/components/TiptapEditor.vue';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductFormData, Outlet, ProductType } from '../../types';
+import type { ProductFormData, Outlet, ProductType, ProductSimple } from '../../types';
 
 // Product type options
 const productTypeOptions: { value: ProductType; label: string }[] = [
@@ -28,22 +28,78 @@ const productTypeOptions: { value: ProductType; label: string }[] = [
 interface Props {
     mode?: 'create' | 'edit';
     outlets?: Outlet[];
+    products?: ProductSimple[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     mode: 'create',
     outlets: () => [],
+    products: () => [],
 });
 
 const model = defineModel<InertiaForm<ProductFormData>>({ required: true });
 
-// Convert outlet_id to string for Select component
-const outletIdString = computed({
-    get: () => model.value.outlet_id?.toString() ?? '',
+// Placeholder value for "None" option (empty string not allowed by SelectItem)
+const NONE_VALUE = '__none__';
+
+// Convert product_type to string for Select component
+const productTypeString = computed({
+    get: () => model.value.product_type ?? NONE_VALUE,
     set: (val: string) => {
-        model.value.outlet_id = val ? Number(val) : null;
+        model.value.product_type = val === NONE_VALUE ? null : (val as ProductType);
     },
 });
+
+// Convert outlet_id to string for Select component
+const outletIdString = computed({
+    get: () => model.value.outlet_id?.toString() ?? NONE_VALUE,
+    set: (val: string) => {
+        model.value.outlet_id = val === NONE_VALUE ? null : Number(val);
+    },
+});
+
+// Status type alias
+type ProductStatus = 'active' | 'inactive' | 'draft' | 'out_of_stock';
+
+// Convert status to string for Select component
+const statusString = computed({
+    get: () => model.value.status ?? 'draft',
+    set: (val: string) => {
+        model.value.status = (val as ProductStatus) ?? 'draft';
+    },
+});
+
+// Convert upsale_id to string for Select component
+const upsaleIdString = computed({
+    get: () => model.value.upsale_id?.toString() ?? NONE_VALUE,
+    set: (val: string) => {
+        model.value.upsale_id = val === NONE_VALUE ? null : Number(val);
+    },
+});
+
+// Convert down_sale_id to string for Select component
+const downSaleIdString = computed({
+    get: () => model.value.down_sale_id?.toString() ?? NONE_VALUE,
+    set: (val: string) => {
+        model.value.down_sale_id = val === NONE_VALUE ? null : Number(val);
+    },
+});
+
+// Computed property for TiptapEditor v-model
+const editorContent = computed({
+    get: () => model.value.description ?? '',
+    set: (val: string) => {
+        model.value.description = val;
+    },
+});
+
+// Format currency for display
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(value);
+};
 </script>
 
 <template>
@@ -74,11 +130,14 @@ const outletIdString = computed({
 
                 <div class="space-y-2">
                     <Label for="product_type">Product Type</Label>
-                    <Select v-model="model.product_type">
+                    <Select v-model="productTypeString">
                         <SelectTrigger>
                             <SelectValue placeholder="Select product type" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
+                            <SelectItem :value="NONE_VALUE">
+                                None
+                            </SelectItem>
                             <SelectItem
                                 v-for="option in productTypeOptions"
                                 :key="option.value"
@@ -100,6 +159,9 @@ const outletIdString = computed({
                             <SelectValue placeholder="Select outlet" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
+                            <SelectItem :value="NONE_VALUE">
+                                None
+                            </SelectItem>
                             <SelectItem
                                 v-for="outlet in props.outlets"
                                 :key="outlet.id"
@@ -129,7 +191,7 @@ const outletIdString = computed({
 
                 <div class="space-y-2">
                     <Label for="status">Status</Label>
-                    <Select v-model="model.status">
+                    <Select v-model="statusString">
                         <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
@@ -147,11 +209,9 @@ const outletIdString = computed({
 
                 <div class="space-y-2 sm:col-span-2">
                     <Label for="description">Description</Label>
-                    <Textarea
-                        id="description"
-                        v-model="model.description"
-                        placeholder="Enter product description"
-                        rows="3"
+                    <TiptapEditor
+                        v-model="editorContent"
+                        placeholder="Enter detailed product description with formatting..."
                     />
                     <p v-if="model.errors.description" class="text-sm text-destructive">
                         {{ model.errors.description }}
@@ -270,6 +330,67 @@ const outletIdString = computed({
                     />
                     <p v-if="model.errors.low_stock_threshold" class="text-sm text-destructive">
                         {{ model.errors.low_stock_threshold }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upsell/Downsell Section -->
+        <div v-if="props.products && props.products.length > 0" class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Upsell & Downsell</h3>
+                <p class="text-sm text-muted-foreground">Recommend related products to customers</p>
+            </div>
+            <Separator />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="upsale_id">Upsell Product</Label>
+                    <Select v-model="upsaleIdString">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select upsell product" />
+                        </SelectTrigger>
+                        <SelectContent class="z-200">
+                            <SelectItem :value="NONE_VALUE">None</SelectItem>
+                            <SelectItem
+                                v-for="product in props.products"
+                                :key="product.id"
+                                :value="product.id.toString()"
+                            >
+                                {{ product.name }} ({{ formatCurrency(product.price) }})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Higher-priced alternative to offer customers
+                    </p>
+                    <p v-if="model.errors.upsale_id" class="text-sm text-destructive">
+                        {{ model.errors.upsale_id }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="down_sale_id">Downsell Product</Label>
+                    <Select v-model="downSaleIdString">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select downsell product" />
+                        </SelectTrigger>
+                        <SelectContent class="z-200">
+                            <SelectItem :value="NONE_VALUE">None</SelectItem>
+                            <SelectItem
+                                v-for="product in props.products"
+                                :key="product.id"
+                                :value="product.id.toString()"
+                            >
+                                {{ product.name }} ({{ formatCurrency(product.price) }})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Lower-priced alternative if customer declines
+                    </p>
+                    <p v-if="model.errors.down_sale_id" class="text-sm text-destructive">
+                        {{ model.errors.down_sale_id }}
                     </p>
                 </div>
             </div>

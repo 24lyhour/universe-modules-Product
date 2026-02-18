@@ -69,7 +69,7 @@ class ProductService
             $query->where('price', '<=', $filters['max_price']);
         }
 
-        return $query->latest()->paginate($perPage);
+        return $query->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
     }
 
     /**
@@ -78,7 +78,7 @@ class ProductService
     public function create(array $data): Product
     {
         $data['uuid'] = (string) Str::uuid();
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug'] = $this->generateUniqueSlug($data['name']);
         $data['created_by'] = Auth::id();
 
         // Handle images
@@ -90,6 +90,32 @@ class ProductService
     }
 
     /**
+     * Generate a unique slug for the product.
+     */
+    protected function generateUniqueSlug(string $name, ?int $excludeId = null): string
+    {
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $count = 1;
+
+        while (true) {
+            $query = Product::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+
+            if (!$query->exists()) {
+                break;
+            }
+
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        return $slug;
+    }
+
+    /**
      * Update a product.
      */
     public function update(Product $product, array $data): Product
@@ -98,7 +124,7 @@ class ProductService
 
         // Update slug if name changed
         if (isset($data['name']) && $data['name'] !== $product->name) {
-            $data['slug'] = Str::slug($data['name']);
+            $data['slug'] = $this->generateUniqueSlug($data['name'], $product->id);
         }
 
         // Handle images

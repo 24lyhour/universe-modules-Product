@@ -42,6 +42,8 @@ class UpdateProductRequest extends FormRequest
             'images.*' => ['string', 'url'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'outlet_id' => ['nullable', 'integer', 'exists:outlets,id'],
+            'upsale_id' => ['nullable', 'integer', 'exists:products,id'],
+            'down_sale_id' => ['nullable', 'integer', 'exists:products,id'],
         ];
     }
 

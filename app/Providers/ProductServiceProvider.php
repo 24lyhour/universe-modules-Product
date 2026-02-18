@@ -51,15 +51,28 @@ class ProductServiceProvider extends ServiceProvider
                 'product.products.*'
             );
 
+            // Product submenu
             MenuService::addSubmenuItem(
                 'primary',
                 'product',
-                __('All Products'),
+                __('Products'),
                 '/dashboard/products',
                 10,
                 null,
                 'product.products.index',
                 'LayoutGrid'
+            );
+
+            // Attributes submenu
+            MenuService::addSubmenuItem(
+                'primary',
+                'product',
+                __('Attributes'),
+                '/dashboard/products/attributes',
+                20,
+                null,
+                'dashboard.product.attributes.index',
+                'Tags'
             );
         });
     }
