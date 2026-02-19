@@ -6,17 +6,32 @@ use Modules\Product\Http\Controllers\Dashboard\V1\ProductController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAddOnController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductUpsellController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductVariantController;
+use Modules\Product\Http\Controllers\Dashboard\V1\ProductSettingsController;
 use Modules\Product\Http\Middleware\DashboardMiddleware;
 
 Route::middleware(['auth', 'verified', DashboardMiddleware::class])
     ->prefix('dashboard')
     ->group(function () {
+        // Product Settings (must be before products resource to avoid conflict)
+        Route::get('products/settings', [ProductSettingsController::class, 'index'])
+            ->name('dashboard.product.settings');
+        Route::post('products/settings', [ProductSettingsController::class, 'update'])
+            ->name('dashboard.product.settings.update');
+
         // Product Attributes CRUD (must be before products resource to avoid conflict)
         Route::resource('products/attributes', ProductAttributeController::class)
             ->names('dashboard.product.attributes')
             ->parameters(['attributes' => 'attribute']);
         Route::patch('products/attributes/{attribute}/toggle-status', [ProductAttributeController::class, 'toggleStatus'])
             ->name('dashboard.product.attributes.toggle-status');
+
+        // Product Add-ons standalone routes (must be before products resource to avoid conflict)
+        Route::get('products/addons', [ProductAddOnController::class, 'indexAll'])
+            ->name('dashboard.product.addons.all');
+        Route::get('products/addons/create', [ProductAddOnController::class, 'createStandalone'])
+            ->name('dashboard.product.addons.create-standalone');
+        Route::post('products/addons', [ProductAddOnController::class, 'storeStandalone'])
+            ->name('dashboard.product.addons.store-standalone');
 
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');

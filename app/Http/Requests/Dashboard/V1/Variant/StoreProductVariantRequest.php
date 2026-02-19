@@ -21,7 +21,7 @@ class StoreProductVariantRequest extends FormRequest
     {
         return [
             'sku' => ['nullable', 'string', 'max:255', 'unique:product_variants,sku'],
-            'name' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
@@ -33,7 +33,7 @@ class StoreProductVariantRequest extends FormRequest
             'is_default' => ['boolean'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-            'attribute_value_ids' => ['required', 'array', 'min:1'],
+            'attribute_value_ids' => ['nullable', 'array'],
             'attribute_value_ids.*' => ['integer', 'exists:product_attribute_values,id'],
         ];
     }
@@ -44,11 +44,10 @@ class StoreProductVariantRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => 'Variant name is required.',
             'stock.required' => 'Stock quantity is required.',
             'stock.min' => 'Stock cannot be negative.',
             'sku.unique' => 'This SKU is already in use.',
-            'attribute_value_ids.required' => 'At least one attribute value is required.',
-            'attribute_value_ids.min' => 'At least one attribute value is required.',
         ];
     }
 }

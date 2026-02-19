@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { ImageUpload } from '@/components/shared';
 import TiptapEditor from '@/components/TiptapEditor.vue';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductFormData, Outlet, ProductType, ProductSimple } from '../../types';
+import type { ProductFormData, Outlet, ProductType, ProductSimple, ProductCategory } from '../../types';
 
 // Product type options
 const productTypeOptions: { value: ProductType; label: string }[] = [
@@ -29,12 +29,14 @@ interface Props {
     mode?: 'create' | 'edit';
     outlets?: Outlet[];
     products?: ProductSimple[];
+    categories?: ProductCategory[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     mode: 'create',
     outlets: () => [],
     products: () => [],
+    categories: () => [],
 });
 
 const model = defineModel<InertiaForm<ProductFormData>>({ required: true });
@@ -56,6 +58,34 @@ const outletIdString = computed({
     set: (val: string) => {
         model.value.outlet_id = val === NONE_VALUE ? null : Number(val);
     },
+});
+
+// Convert category_id to string for Select component
+const categoryIdString = computed({
+    get: () => model.value.category_id?.toString() ?? NONE_VALUE,
+    set: (val: string) => {
+        model.value.category_id = val === NONE_VALUE ? null : Number(val);
+    },
+});
+
+// Filter categories based on selected product type
+const filteredCategories = computed(() => {
+    if (!model.value.product_type) {
+        return props.categories;
+    }
+    return props.categories.filter(
+        cat => cat.product_type === null || cat.product_type === model.value.product_type
+    );
+});
+
+// Clear category when product type changes and current category is incompatible
+watch(() => model.value.product_type, (newType) => {
+    if (model.value.category_id) {
+        const currentCategory = props.categories.find(c => c.id === model.value.category_id);
+        if (currentCategory && currentCategory.product_type !== null && currentCategory.product_type !== newType) {
+            model.value.category_id = null;
+        }
+    }
 });
 
 // Status type alias
@@ -173,6 +203,33 @@ const formatCurrency = (value: number) => {
                     </Select>
                     <p v-if="model.errors.outlet_id" class="text-sm text-destructive">
                         {{ model.errors.outlet_id }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="category_id">Category</Label>
+                    <Select v-model="categoryIdString">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent class="z-200">
+                            <SelectItem :value="NONE_VALUE">
+                                None
+                            </SelectItem>
+                            <SelectItem
+                                v-for="category in filteredCategories"
+                                :key="category.id"
+                                :value="category.id.toString()"
+                            >
+                                {{ category.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p v-if="model.errors.category_id" class="text-sm text-destructive">
+                        {{ model.errors.category_id }}
+                    </p>
+                    <p v-if="model.product_type && filteredCategories.length === 0" class="text-xs text-muted-foreground">
+                        No categories for this product type
                     </p>
                 </div>
 

@@ -23,8 +23,14 @@ const isOpen = computed({
     },
 });
 
+/**
+ * value form data 
+ */
 const form = useForm<ProductAddOnFormData>({
     add_on_product_id: null,
+    name: '',
+    description: '',
+    image_url: '',
     price_adjustment: 0,
     max_quantity: 1,
     sort_order: 0,
@@ -32,15 +38,19 @@ const form = useForm<ProductAddOnFormData>({
     is_active: true,
 });
 
-// Use shared validation composable
+/**
+ * validation form filed
+ */
 const { validateForm, validateAndSubmit, createIsFormInvalid } = useFormValidation(
     addOnSchema,
-    ['add_on_product_id'] // Required fields
+    ['add_on_product_id', 'price_adjustment', 'max_quantity'] 
 );
 
-// Get form data for validation
 const getFormData = () => ({
     add_on_product_id: form.add_on_product_id,
+    name: form.name,
+    description: form.description,
+    image_url: form.image_url,
     price_adjustment: form.price_adjustment,
     max_quantity: form.max_quantity,
     sort_order: form.sort_order,
@@ -48,14 +58,15 @@ const getFormData = () => ({
     is_active: form.is_active,
 });
 
-// Watch form changes to validate in real-time
 watch(() => form.add_on_product_id, () => {
     if (form.add_on_product_id) validateForm(getFormData());
 });
 
-// Check if form is valid for submit button state
 const isFormInvalid = createIsFormInvalid(getFormData);
 
+/**
+ * submit handle 
+ */
 const handleSubmit = () => {
     validateAndSubmit(getFormData(), form, () => {
         form.post(`/dashboard/products/${props.product.id}/addons`, {

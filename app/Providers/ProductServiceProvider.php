@@ -83,7 +83,7 @@ class ProductServiceProvider extends ServiceProvider
                 '/dashboard/products/addons',
                 30,
                 null,
-                'dashboard.product.addons.index',
+                'dashboard.product.addons.all',
                 'PlusCircle'
             );
         });

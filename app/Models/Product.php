@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Product\Database\Factories\ProductFactory;
+use Modules\Menu\Models\Category;
+use Modules\Outlet\Models\Outlet;
+use App\Models\User;
 
 class Product extends Model
 {
@@ -97,20 +100,29 @@ class Product extends Model
     }
 
     /**
-     * Relation to the category.
-     * Note: Uncomment when Category module is created.
+     * Relation to the category (direct foreign key).
      */
-    // public function category(): BelongsTo
-    // {
-    //     return $this->belongsTo(\Modules\Category\Models\Category::class);
-    // }
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
+     * Many-to-many relationship with menu categories via pivot table.
+     */
+    public function menuCategories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'menu_category_products', 'product_id', 'category_id')
+            ->withPivot('price_override', 'sort_order', 'is_available')
+            ->withTimestamps();
+    }
 
     /**
      * Relation to the outlet.
      */
     public function outlet(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Outlet\Models\Outlet::class);
+        return $this->belongsTo(Outlet::class);
     }
 
     /**
@@ -118,7 +130,7 @@ class Product extends Model
      */
     public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -126,7 +138,7 @@ class Product extends Model
      */
     public function updatedBy(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**

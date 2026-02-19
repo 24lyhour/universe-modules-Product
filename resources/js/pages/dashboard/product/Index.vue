@@ -14,7 +14,9 @@ import {
     Layers,
     Tags,
     ArrowUpCircle,
+    PlusCircle,
     Palette,
+    Settings,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -27,6 +29,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     TableReusable,
     ModalConfirm,
@@ -69,6 +77,7 @@ const pagination = computed(() => ({
 const columns: TableColumn<Product>[] = [
     { key: 'name', label: 'Product', width: '25%' },
     { key: 'sku', label: 'SKU' },
+    { key: 'category', label: 'Category' },
     { key: 'price', label: 'Price', align: 'right' },
     { key: 'stock', label: 'Stock', align: 'center' },
     { key: 'variants', label: 'Variants', align: 'center' },
@@ -103,6 +112,11 @@ const tableActions: TableAction<Product>[] = [
         label: 'Manage Upsells',
         icon: ArrowUpCircle,
         onClick: (item) => router.visit(`/dashboard/products/${item.id}/upsells`),
+    },
+    {
+        label: 'Manage Add-ons',
+        icon: PlusCircle,
+        onClick: (item) => router.visit(`/dashboard/products/${item.id}/addons`),
     },
     {
         label: 'Delete',
@@ -244,42 +258,50 @@ const tableData = computed(() => {
                     <h1 class="text-2xl font-bold tracking-tight">Products</h1>
                     <p class="text-muted-foreground">Manage your products inventory</p>
                 </div>
-                <Button as-child>
-                    <Link href="/dashboard/products/create">
-                        <Plus class="mr-2 h-4 w-4" />
-                        Add Product
-                    </Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" as-child>
+                        <Link href="/dashboard/products/settings">
+                            <Settings class="mr-2 h-4 w-4" />
+                            Settings
+                        </Link>
+                    </Button>
+                    <Button as-child>
+                        <Link href="/dashboard/products/create">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Product
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid gap-4 md:grid-cols-5">
                 <StatsCard
                     title="Total Products"
-                    :value="stats.total"
+                    :value="props.stats.total"
                     :icon="Package"
                 />
                 <StatsCard
                     title="Active"
-                    :value="stats.active"
+                    :value="props.stats.active"
                     :icon="PackageCheck"
                     variant="success"
                 />
                 <StatsCard
                     title="Out of Stock"
-                    :value="stats.out_of_stock"
+                    :value="props.stats.out_of_stock"
                     :icon="PackageX"
                     variant="destructive"
                 />
                 <StatsCard
                     title="Low Stock"
-                    :value="stats.low_stock"
+                    :value="props.stats.low_stock"
                     :icon="AlertTriangle"
                     variant="warning"
                 />
                 <StatsCard
                     title="Featured"
-                    :value="stats.featured || 0"
+                    :value="props.stats.featured || 0"
                     :icon="Star"
                     variant="info"
                 />
@@ -335,7 +357,7 @@ const tableData = computed(() => {
 
                 <!-- Custom cell for product name -->
                 <template #cell-name="{ item }">
-                    <div class="flex items-center gap-3">
+                    <Link :href="`/dashboard/products/${item.id}`" class="flex items-center gap-3 hover:opacity-80">
                         <div
                             v-if="item.images && item.images.length > 0"
                             class="h-10 w-10 overflow-hidden rounded-lg bg-muted"
@@ -353,7 +375,7 @@ const tableData = computed(() => {
                             <Package class="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div class="flex flex-col gap-1">
-                            <span class="font-medium">{{ item.name }}</span>
+                            <span class="font-medium hover:underline">{{ item.name }}</span>
                             <span
                                 v-if="item.description"
                                 class="max-w-[200px] truncate text-xs text-muted-foreground"
@@ -361,7 +383,7 @@ const tableData = computed(() => {
                                 {{ item.description }}
                             </span>
                         </div>
-                    </div>
+                    </Link>
                 </template>
 
                 <!-- Custom cell for SKU -->
@@ -369,6 +391,28 @@ const tableData = computed(() => {
                     <code v-if="item.sku" class="rounded bg-muted px-2 py-1 text-xs font-mono">
                         {{ item.sku }}
                     </code>
+                    <span v-else class="text-muted-foreground">-</span>
+                </template>
+
+                <!-- Custom cell for category -->
+                <template #cell-category="{ item }">
+                    <TooltipProvider v-if="item.category">
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Link
+                                    :href="`/dashboard/categories/${item.category.id}/products/manage`"
+                                    class="inline-block"
+                                >
+                                    <Badge variant="outline" class="cursor-pointer">
+                                        {{ item.category.name }}
+                                    </Badge>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Click to view products in {{ item.category.name }}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                     <span v-else class="text-muted-foreground">-</span>
                 </template>
 

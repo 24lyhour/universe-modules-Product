@@ -9,6 +9,7 @@ import {
     Tags,
     ToggleLeft,
     ToggleRight,
+    Settings,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -192,12 +193,20 @@ const formatDate = (date: string) => {
                     <h1 class="text-2xl font-bold tracking-tight">Product Attributes</h1>
                     <p class="text-muted-foreground">Manage product variation attributes (Size, Color, etc.)</p>
                 </div>
-                <Button as-child>
-                    <Link href="/dashboard/products/attributes/create">
-                        <Plus class="mr-2 h-4 w-4" />
-                        Add Attribute
-                    </Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" as-child>
+                        <Link href="/dashboard/products/settings">
+                            <Settings class="mr-2 h-4 w-4" />
+                            Settings
+                        </Link>
+                    </Button>
+                    <Button as-child>
+                        <Link href="/dashboard/products/attributes/create">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Attribute
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <!-- Stats Cards -->

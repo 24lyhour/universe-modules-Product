@@ -43,7 +43,6 @@ const form = useForm<ProductFormData>({
     down_sale_id: null,
 });
 
-// Use shared validation composable
 const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price']);
 
 /**
@@ -93,7 +92,9 @@ const getFormData = () => ({
     down_sale_id: form.down_sale_id,
 });
 
-// Watch form changes to validate in real-time
+/**
+ * watch the value real time 
+ */
 watch(
     () => [form.name, form.price, form.sale_price, form.stock],
     () => {
@@ -143,6 +144,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductForm v-model="form" mode="create" :outlets="props.outlets" :products="props.products" />
+        <ProductForm v-model="form" mode="create" :outlets="props.outlets" :products="props.products" :categories="props.categories" />
     </ModalForm>
 </template>

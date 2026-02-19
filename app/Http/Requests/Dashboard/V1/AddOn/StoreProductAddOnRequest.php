@@ -24,18 +24,19 @@ class StoreProductAddOnRequest extends FormRequest
 
         return [
             'add_on_product_id' => [
-                'required',
+                'nullable',
                 'integer',
                 'exists:products,id',
                 'different:product_id',
-                Rule::unique('product_add_ons')
-                    ->where('product_id', $productId),
             ],
-            'price_adjustment' => ['nullable', 'numeric'],
-            'max_quantity' => ['nullable', 'integer', 'min:1'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
+            'price_adjustment' => ['required', 'numeric'],
+            'max_quantity' => ['required', 'integer', 'min:1'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-            'is_required' => ['boolean'],
-            'is_active' => ['boolean'],
+            'is_required' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
         ];
     }
 
@@ -45,11 +46,16 @@ class StoreProductAddOnRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'add_on_product_id.required' => 'Please select a product.',
+            'name.required' => 'Add-on name is required.',
+            'name.max' => 'Name must be 255 characters or less.',
             'add_on_product_id.exists' => 'The selected product does not exist.',
-            'add_on_product_id.unique' => 'This product is already added as an add-on.',
             'add_on_product_id.different' => 'A product cannot be its own add-on.',
+            'price_adjustment.required' => 'Price adjustment is required.',
+            'price_adjustment.numeric' => 'Price adjustment must be a number.',
+            'max_quantity.required' => 'Max quantity is required.',
             'max_quantity.min' => 'Max quantity must be at least 1.',
+            'is_required.required' => 'Required field is required.',
+            'is_active.required' => 'Active field is required.',
         ];
     }
 }

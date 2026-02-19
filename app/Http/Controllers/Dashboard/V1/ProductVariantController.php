@@ -3,6 +3,7 @@
 namespace Modules\Product\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Product\Actions\Dashboard\V1\CreateProductVariantAction;
@@ -50,10 +51,12 @@ class ProductVariantController extends Controller
     public function create(Product $product)
     {
         $attributes = $this->attributeService->getActiveWithValues();
+        $productSettings = Setting::getGroup('product');
 
         return Inertia::render('product::dashboard/variant/Create', [
             'product' => (new ProductResource($product))->resolve(),
             'attributes' => ProductAttributeResource::collection($attributes)->resolve(),
+            'productSettings' => $productSettings,
         ]);
     }
 
@@ -91,11 +94,13 @@ class ProductVariantController extends Controller
     {
         $variant->load('attributeValueRelations');
         $attributes = $this->attributeService->getActiveWithValues();
+        $productSettings = Setting::getGroup('product');
 
         return Inertia::render('product::dashboard/variant/Edit', [
             'product' => (new ProductResource($product))->resolve(),
             'variant' => (new ProductVariantResource($variant))->resolve(),
             'attributes' => ProductAttributeResource::collection($attributes)->resolve(),
+            'productSettings' => $productSettings,
         ]);
     }
 

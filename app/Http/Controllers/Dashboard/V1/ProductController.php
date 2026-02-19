@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Menu\Models\Category;
 use Modules\Outlet\Models\Outlet;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
@@ -54,10 +55,15 @@ class ProductController extends Controller
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
+        $categories = Category::select('id', 'name', 'product_type')
+            ->where('status', true)
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Create', [
             'outlets' => $outlets,
             'products' => $products,
+            'categories' => $categories,
         ])->baseRoute('product.products.index');
     }
 
@@ -103,11 +109,16 @@ class ProductController extends Controller
             ->where('id', '!=', $product->id)
             ->orderBy('name')
             ->get();
+        $categories = Category::select('id', 'name', 'product_type')
+            ->where('status', true)
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Edit', [
             'product' => (new ProductResource($product))->resolve(),
             'outlets' => $outlets,
             'products' => $products,
+            'categories' => $categories,
         ])->baseRoute('product.products.index');
     }
 
