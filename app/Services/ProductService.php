@@ -4,6 +4,7 @@ namespace Modules\Product\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Product\Models\Product;
 
@@ -69,7 +70,7 @@ class ProductService
             $query->where('price', '<=', $filters['max_price']);
         }
 
-        return $query->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
+        return $query->with('category')->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
     }
 
     /**
@@ -86,7 +87,14 @@ class ProductService
             $data['images'] = $this->processImages($data['images']);
         }
 
-        return Product::create($data);
+        $product = Product::create($data);
+
+        // Sync to menu_category_products pivot table if category_id is set
+        if (isset($data['category_id']) && $data['category_id'] !== null) {
+            $this->syncCategoryPivot($product, (int) $data['category_id']);
+        }
+
+        return $product;
     }
 
     /**
@@ -121,6 +129,7 @@ class ProductService
     public function update(Product $product, array $data): Product
     {
         $data['updated_by'] = Auth::id();
+        $oldCategoryId = $product->category_id;
 
         // Update slug if name changed
         if (isset($data['name']) && $data['name'] !== $product->name) {
@@ -133,6 +142,12 @@ class ProductService
         }
 
         $product->update($data);
+
+        // Sync to menu_category_products pivot table if category_id changed
+        if (array_key_exists('category_id', $data)) {
+            $newCategoryId = $data['category_id'] !== null ? (int) $data['category_id'] : null;
+            $this->syncCategoryPivot($product, $newCategoryId, $oldCategoryId);
+        }
 
         return $product->fresh();
     }
@@ -237,5 +252,32 @@ class ProductService
             ->where('status', 'active')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Sync product to category pivot table.
+     */
+    protected function syncCategoryPivot(Product $product, ?int $newCategoryId, ?int $oldCategoryId = null): void
+    {
+        // Remove from old category pivot if changed
+        if ($oldCategoryId && $oldCategoryId !== $newCategoryId) {
+            $product->menuCategories()->detach($oldCategoryId);
+        }
+
+        // Add to new category pivot if set
+        if ($newCategoryId) {
+            // Check if already attached using wherePivot for pivot table column
+            if (!$product->menuCategories()->wherePivot('category_id', $newCategoryId)->exists()) {
+                // Get max sort_order for this category
+                $maxSortOrder = DB::table('menu_category_products')
+                    ->where('category_id', $newCategoryId)
+                    ->max('sort_order') ?? 0;
+
+                $product->menuCategories()->attach($newCategoryId, [
+                    'sort_order' => $maxSortOrder + 1,
+                    'is_available' => true,
+                ]);
+            }
+        }
     }
 }

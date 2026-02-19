@@ -40,7 +40,7 @@ class UpdateProductRequest extends FormRequest
             'pre_order' => ['boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['string', 'url'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_id' => ['nullable', 'integer', 'exists:menu_categories,id'],
             'outlet_id' => ['nullable', 'integer', 'exists:outlets,id'],
             'upsale_id' => ['nullable', 'integer', 'exists:products,id'],
             'down_sale_id' => ['nullable', 'integer', 'exists:products,id'],

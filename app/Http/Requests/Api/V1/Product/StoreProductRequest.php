@@ -25,7 +25,7 @@ class StoreProductRequest extends FormRequest
             'sku' => ['nullable', 'string', 'max:100', 'unique:products,sku'],
             'price' => ['required', 'numeric', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
-            'sale_price' => ['nullable', 'numeric', 'min:0', 'lt:price'],
+            'sale_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'status' => ['sometimes', 'in:active,inactive,draft,out_of_stock'],
@@ -33,7 +33,7 @@ class StoreProductRequest extends FormRequest
             'pre_order' => ['boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['string'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_id' => ['nullable', 'integer', 'exists:menu_categories,id'],
         ];
     }
 
@@ -46,7 +46,6 @@ class StoreProductRequest extends FormRequest
             'name.required' => 'Product name is required.',
             'price.required' => 'Product price is required.',
             'price.min' => 'Price must be at least 0.',
-            'sale_price.lt' => 'Sale price must be less than the regular price.',
             'sku.unique' => 'This SKU is already in use.',
             'stock.required' => 'Stock quantity is required.',
             'stock.min' => 'Stock cannot be negative.',

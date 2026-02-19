@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import { ArrowLeft } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,11 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { type BreadcrumbItem } from '@/types';
 import type { Product, ProductAttribute } from '../../../types';
 
@@ -33,6 +38,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Variants', href: `/dashboard/products/${props.product.id}/variants` },
     { title: 'Create', href: `/dashboard/products/${props.product.id}/variants/create` },
 ];
+
+// Show attributes section only if there are active attributes
+const showAttributesSection = ref(false);
 
 const form = useForm({
     sku: '',
@@ -78,6 +86,11 @@ const formatPriceAdjustment = (price: number) => {
     const sign = price > 0 ? '+' : '';
     return ` (${sign}$${price.toFixed(2)})`;
 };
+
+// Form is valid if name OR sku is provided
+const isFormValid = computed(() => {
+    return form.name.trim() !== '' || form.sku.trim() !== '';
+});
 </script>
 
 <template>
@@ -123,12 +136,19 @@ const formatPriceAdjustment = (price: number) => {
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="name">Name</Label>
+                                    <Label for="name">Name *</Label>
                                     <Input
                                         id="name"
                                         v-model="form.name"
-                                        placeholder="Auto-generated if empty"
+                                        placeholder="e.g., 128GB, Black, Size M"
+                                        :class="{ 'border-red-500': form.errors.name }"
                                     />
+                                    <p v-if="form.errors.name" class="text-sm text-red-500">
+                                        {{ form.errors.name }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        Enter the variant name (e.g., "128GB" or "Black")
+                                    </p>
                                 </div>
                             </div>
 
@@ -240,57 +260,65 @@ const formatPriceAdjustment = (price: number) => {
                         </CardContent>
                     </Card>
 
-                    <!-- Attributes Card -->
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Attribute Values *</CardTitle>
-                            <CardDescription>Select attribute values for this variant</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="!activeAttributes.length" class="text-center py-8 text-muted-foreground">
-                                No attributes available. Create attributes first.
-                            </div>
-
-                            <div v-else class="space-y-6">
-                                <div v-for="attribute in activeAttributes" :key="attribute.id" class="space-y-3">
-                                    <h4 class="font-medium">{{ attribute.name }}</h4>
-                                    <div class="flex flex-wrap gap-3">
-                                        <div
-                                            v-for="value in attribute.values"
-                                            :key="value.id"
-                                            class="flex items-center space-x-2"
-                                        >
-                                            <Checkbox
-                                                :id="`value-${value.id}`"
-                                                :checked="isValueSelected(value.id)"
-                                                @update:checked="toggleAttributeValue(value.id)"
-                                            />
-                                            <label
-                                                :for="`value-${value.id}`"
-                                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                            >
-                                                <span class="flex items-center gap-2">
-                                                    <span
-                                                        v-if="attribute.type === 'color' && value.color_code"
-                                                        class="h-4 w-4 rounded-full border"
-                                                        :style="{ backgroundColor: value.color_code }"
+                    <!-- Attributes Card (Optional, Collapsible) -->
+                    <Collapsible v-if="activeAttributes.length" v-model:open="showAttributesSection">
+                        <Card>
+                            <CollapsibleTrigger as-child>
+                                <CardHeader class="cursor-pointer hover:bg-muted/50 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Attribute Values (Optional)</CardTitle>
+                                            <CardDescription>Link to predefined attributes if needed</CardDescription>
+                                        </div>
+                                        <ChevronDown v-if="!showAttributesSection" class="h-5 w-5 text-muted-foreground" />
+                                        <ChevronUp v-else class="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <CardContent>
+                                    <div class="space-y-6">
+                                        <div v-for="attribute in activeAttributes" :key="attribute.id" class="space-y-3">
+                                            <h4 class="font-medium">{{ attribute.name }}</h4>
+                                            <div class="flex flex-wrap gap-3">
+                                                <div
+                                                    v-for="value in attribute.values"
+                                                    :key="value.id"
+                                                    class="flex items-center space-x-2"
+                                                >
+                                                    <Checkbox
+                                                        :id="`value-${value.id}`"
+                                                        :checked="isValueSelected(value.id)"
+                                                        @update:checked="toggleAttributeValue(value.id)"
                                                     />
-                                                    {{ value.label || value.value }}
-                                                    <span class="text-muted-foreground text-xs">
-                                                        {{ formatPriceAdjustment(value.price_adjustment) }}
-                                                    </span>
-                                                </span>
-                                            </label>
+                                                    <label
+                                                        :for="`value-${value.id}`"
+                                                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        <span class="flex items-center gap-2">
+                                                            <span
+                                                                v-if="attribute.type === 'color' && value.color_code"
+                                                                class="h-4 w-4 rounded-full border"
+                                                                :style="{ backgroundColor: value.color_code }"
+                                                            />
+                                                            {{ value.label || value.value }}
+                                                            <span class="text-muted-foreground text-xs">
+                                                                {{ formatPriceAdjustment(value.price_adjustment) }}
+                                                            </span>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <p v-if="form.errors.attribute_value_ids" class="text-sm text-red-500 mt-2">
-                                {{ form.errors.attribute_value_ids }}
-                            </p>
-                        </CardContent>
-                    </Card>
+                                    <p v-if="form.errors.attribute_value_ids" class="text-sm text-red-500 mt-2">
+                                        {{ form.errors.attribute_value_ids }}
+                                    </p>
+                                </CardContent>
+                            </CollapsibleContent>
+                        </Card>
+                    </Collapsible>
                 </div>
 
                 <!-- Sidebar -->
@@ -337,7 +365,7 @@ const formatPriceAdjustment = (price: number) => {
                             <Button
                                 type="submit"
                                 class="w-full"
-                                :disabled="form.processing || !form.attribute_value_ids.length"
+                                :disabled="form.processing || !isFormValid"
                             >
                                 {{ form.processing ? 'Creating...' : 'Create Variant' }}
                             </Button>
