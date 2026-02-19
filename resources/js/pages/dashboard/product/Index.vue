@@ -16,6 +16,7 @@ import {
     ArrowUpCircle,
     PlusCircle,
     Palette,
+    Settings,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -257,12 +258,20 @@ const tableData = computed(() => {
                     <h1 class="text-2xl font-bold tracking-tight">Products</h1>
                     <p class="text-muted-foreground">Manage your products inventory</p>
                 </div>
-                <Button as-child>
-                    <Link href="/dashboard/products/create">
-                        <Plus class="mr-2 h-4 w-4" />
-                        Add Product
-                    </Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" as-child>
+                        <Link href="/dashboard/products/settings">
+                            <Settings class="mr-2 h-4 w-4" />
+                            Settings
+                        </Link>
+                    </Button>
+                    <Button as-child>
+                        <Link href="/dashboard/products/create">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Add Product
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
