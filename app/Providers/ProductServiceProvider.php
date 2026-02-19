@@ -86,6 +86,18 @@ class ProductServiceProvider extends ServiceProvider
                 'dashboard.product.addons.all',
                 'PlusCircle'
             );
+
+            // Categories submenu (links to Menu module categories)
+            MenuService::addSubmenuItem(
+                'primary',
+                'product',
+                __('Categories'),
+                '/dashboard/categories',
+                40,
+                null,
+                'menu.categories.index',
+                'Layers'
+            );
         });
     }
 

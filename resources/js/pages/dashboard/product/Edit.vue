@@ -105,6 +105,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" :products="props.products" />
+        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" :products="props.products" :categories="props.categories" />
     </ModalForm>
 </template>

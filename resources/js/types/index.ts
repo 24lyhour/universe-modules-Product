@@ -90,6 +90,7 @@ export interface Product {
 export interface ProductCategory {
     id: number;
     name: string;
+    product_type: ProductType | null;
 }
 
 export interface ProductSimple {

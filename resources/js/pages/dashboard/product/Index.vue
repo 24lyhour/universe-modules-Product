@@ -262,30 +262,30 @@ const tableData = computed(() => {
             <div class="grid gap-4 md:grid-cols-5">
                 <StatsCard
                     title="Total Products"
-                    :value="stats.total"
+                    :value="props.stats.total"
                     :icon="Package"
                 />
                 <StatsCard
                     title="Active"
-                    :value="stats.active"
+                    :value="props.stats.active"
                     :icon="PackageCheck"
                     variant="success"
                 />
                 <StatsCard
                     title="Out of Stock"
-                    :value="stats.out_of_stock"
+                    :value="props.stats.out_of_stock"
                     :icon="PackageX"
                     variant="destructive"
                 />
                 <StatsCard
                     title="Low Stock"
-                    :value="stats.low_stock"
+                    :value="props.stats.low_stock"
                     :icon="AlertTriangle"
                     variant="warning"
                 />
                 <StatsCard
                     title="Featured"
-                    :value="stats.featured || 0"
+                    :value="props.stats.featured || 0"
                     :icon="Star"
                     variant="info"
                 />
