@@ -2,6 +2,7 @@
 
 namespace Modules\Product\Models;
 
+use App\Traits\BelongsToOutlet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,8 +17,7 @@ use App\Models\User;
 
 class Product extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToOutlet;
 
     /**
      * The attributes that are mass assignable.

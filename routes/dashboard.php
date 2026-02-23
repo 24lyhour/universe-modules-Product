@@ -9,7 +9,7 @@ use Modules\Product\Http\Controllers\Dashboard\V1\ProductVariantController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductSettingsController;
 use Modules\Product\Http\Middleware\DashboardMiddleware;
 
-Route::middleware(['auth', 'verified', DashboardMiddleware::class])
+Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permission'])
     ->prefix('dashboard')
     ->group(function () {
         // Product Settings (must be before products resource to avoid conflict)

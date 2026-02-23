@@ -2,6 +2,7 @@
 
 namespace Modules\Product\Models;
 
+use App\Traits\BelongsToProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,8 +12,7 @@ use Illuminate\Support\Str;
 
 class ProductVariant extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToProduct;
 
     protected $table = 'product_variants';
 

@@ -21,7 +21,9 @@ class ProductController extends Controller
 {
     public function __construct(
         protected ProductService $productService
-    ) {}
+    ) {
+        // Authorization is handled by 'auto.permission' middleware in routes
+    }
 
     /**
      * Display a listing of the resource.

@@ -2,12 +2,14 @@
 
 namespace Modules\Product\Models;
 
+use App\Traits\BelongsToProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class ProductUpsell extends Model
 {
+    use BelongsToProduct;
     /**
      * Upsell types.
      */

@@ -47,7 +47,7 @@ class ProductServiceProvider extends ServiceProvider
                 '/dashboard/products',
                 'LayoutGrid',
                 20,
-                null,
+                'products.view_any',
                 'product.products.*'
             );
 
@@ -58,7 +58,7 @@ class ProductServiceProvider extends ServiceProvider
                 __('Products'),
                 '/dashboard/products',
                 10,
-                null,
+                'products.view_any',
                 'product.products.index',
                 'LayoutGrid'
             );
@@ -70,7 +70,7 @@ class ProductServiceProvider extends ServiceProvider
                 __('Attributes'),
                 '/dashboard/products/attributes',
                 20,
-                null,
+                'product_attributes.view_any',
                 'dashboard.product.attributes.index',
                 'Tags'
             );
@@ -82,7 +82,7 @@ class ProductServiceProvider extends ServiceProvider
                 __('Add-ons'),
                 '/dashboard/products/addons',
                 30,
-                null,
+                'product_add_ons.view_any',
                 'dashboard.product.addons.all',
                 'PlusCircle'
             );
