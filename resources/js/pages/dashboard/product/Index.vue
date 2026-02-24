@@ -370,9 +370,9 @@ const tableData = computed(() => {
                         </div>
                         <div
                             v-else
-                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
                         >
-                            <Package class="h-5 w-5 text-muted-foreground" />
+                            <Package class="h-5 w-5 text-primary" />
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="font-medium hover:underline">{{ item.name }}</span>
