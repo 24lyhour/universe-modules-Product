@@ -51,7 +51,7 @@ class ProductController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Modal
+    public function create(): Response
     {
         $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
         $products = Product::select('id', 'name', 'price', 'sku')
@@ -63,12 +63,12 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return Inertia::modal('product::dashboard/product/Create', [
+        return Inertia::render('product::dashboard/product/Create', [
             'outlets' => $outlets,
             'products' => $products,
             'categories' => $categories,
             'productSettings' => UpdateProductSettingsAction::getSettings(),
-        ])->baseRoute('product.products.index');
+        ]);
     }
 
     /**
