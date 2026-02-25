@@ -32,7 +32,7 @@ const form = useForm<ProductFormData>({
     purchase_price: null,
     sale_price: null,
     stock: 0,
-    low_stock_threshold: 10,
+    low_stock_threshold: props.productSettings?.low_stock_threshold ?? 10,
     status: 'draft',
     is_featured: false,
     pre_order: false,
@@ -46,24 +46,26 @@ const form = useForm<ProductFormData>({
 const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price']);
 
 /**
- * Generate SKU from product name
+ * Generate SKU from product name using settings
  */
 const generateSku = (name: string): string => {
     if (!name) return '';
-    const prefix = 'PRD';
+    const prefix = props.productSettings?.sku_prefix || 'PRD';
+    const separator = props.productSettings?.sku_separator || '-';
     const slug = name
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '')
         .substring(0, 6);
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${prefix}-${slug}-${random}`;
+    return `${prefix}${separator}${slug}${separator}${random}`;
 };
 
-// Auto-generate SKU when name changes
+// Auto-generate SKU when name changes (only if setting is enabled)
 watch(
     () => form.name,
     (newName) => {
-        if (newName && !form.sku) {
+        const autoGenerate = props.productSettings?.auto_generate_sku ?? true;
+        if (autoGenerate && newName && !form.sku) {
             form.sku = generateSku(newName);
         }
     }

@@ -184,10 +184,18 @@ export interface ProductShowProps {
     product: Product;
 }
 
+export interface ProductSettings {
+    auto_generate_sku: boolean;
+    sku_prefix: string;
+    sku_separator: string;
+    low_stock_threshold: number;
+}
+
 export interface ProductCreateProps {
     categories?: ProductCategory[];
     outlets?: Outlet[];
     products?: ProductSimple[];
+    productSettings?: ProductSettings;
 }
 
 export interface ProductEditProps {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,14 @@ const form = useForm({
     low_stock_threshold: props.productSettings.low_stock_threshold ?? 5,
 });
 
+// Computed for Switch v-model
+const autoGenerateSku = computed({
+    get: () => form.auto_generate_sku,
+    set: (value: boolean) => {
+        form.auto_generate_sku = value;
+    },
+});
+
 const handleSubmit = () => {
     form.post('/dashboard/products/settings', {
         preserveScroll: true,
@@ -50,6 +59,8 @@ const handleSubmit = () => {
         },
     });
 };
+
+
 </script>
 
 <template>
@@ -90,8 +101,7 @@ const handleSubmit = () => {
                             </div>
                             <Switch
                                 id="auto_generate_sku"
-                                :checked="form.auto_generate_sku"
-                                @update:checked="form.auto_generate_sku = $event"
+                                v-model="autoGenerateSku"
                             />
                         </div>
 

@@ -3,6 +3,7 @@
 namespace Modules\Product\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -62,10 +63,19 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Get product settings for SKU generation
+        $productSettings = Setting::getGroup('product');
+
         return Inertia::modal('product::dashboard/product/Create', [
             'outlets' => $outlets,
             'products' => $products,
             'categories' => $categories,
+            'productSettings' => [
+                'auto_generate_sku' => $productSettings['auto_generate_sku'] ?? true,
+                'sku_prefix' => $productSettings['sku_prefix'] ?? 'PRD',
+                'sku_separator' => $productSettings['sku_separator'] ?? '-',
+                'low_stock_threshold' => $productSettings['low_stock_threshold'] ?? 10,
+            ],
         ])->baseRoute('product.products.index');
     }
 
