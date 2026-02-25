@@ -161,7 +161,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="product_type">Product Type</Label>
                     <Select v-model="productTypeString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select product type" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
@@ -185,7 +185,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="outlet_id">Outlet</Label>
                     <Select v-model="outletIdString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select outlet" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
@@ -209,7 +209,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="category_id">Category</Label>
                     <Select v-model="categoryIdString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
@@ -249,7 +249,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="status">Status</Label>
                     <Select v-model="statusString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
@@ -404,7 +404,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="upsale_id">Upsell Product</Label>
                     <Select v-model="upsaleIdString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select upsell product" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
@@ -429,7 +429,7 @@ const formatCurrency = (value: number) => {
                 <div class="space-y-2">
                     <Label for="down_sale_id">Downsell Product</Label>
                     <Select v-model="downSaleIdString">
-                        <SelectTrigger>
+                        <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select downsell product" />
                         </SelectTrigger>
                         <SelectContent class="z-200">

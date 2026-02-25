@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { Package } from 'lucide-vue-next';
-import { toast } from 'vue-sonner';
+import { ModalForm } from '@/components/shared';
 import ProductForm from '../../components/ProductForm.vue';
+import { useForm } from '@inertiajs/vue3';
+import { useModal } from 'momentum-modal';
+import { computed, watch } from 'vue';
 import { productSchema } from '../../../validation/productSchema';
 import { useFormValidation } from '@/composables/useFormValidation';
 import type { ProductFormData, ProductCreateProps } from '../../../types';
-import type { BreadcrumbItem } from '@/types';
 import product from '@/routes/product';
 
 const props = defineProps<ProductCreateProps>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Products', href: '/dashboard/products' },
-    { title: 'Create', href: '/dashboard/products/create' },
-];
+const { show, close, redirect } = useModal();
+
+const isOpen = computed({
+    get: () => show.value,
+    set: (val: boolean) => {
+        if (!val) {
+            close();
+            redirect();
+        }
+    },
+});
 
 const form = useForm<ProductFormData>({
     name: '',
@@ -124,71 +120,38 @@ const handleSubmit = () => {
     validateAndSubmit(getFormData(), form, () => {
         form.post(product.products.store.url(), {
             onSuccess: () => {
-                toast.success('Product created successfully');
-                router.visit('/dashboard/products');
+                close();
+                redirect();
             },
         });
     });
 };
 
 const handleCancel = () => {
-    router.visit('/dashboard/products');
+    close();
+    redirect();
 };
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Create Product" />
-
-        <div class="flex h-full flex-1 flex-col gap-6 p-6">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                        <Package class="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Create Product</h1>
-                        <p class="text-muted-foreground">Add a new product to your inventory</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>Product Information</CardTitle>
-                    <CardDescription>Fill in the details for the new product</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form @submit.prevent="handleSubmit" class="space-y-6">
-                        <ProductForm
-                            v-model="form"
-                            mode="create"
-                            :outlets="props.outlets"
-                            :products="props.products"
-                            :categories="props.categories"
-                        />
-
-                        <!-- Actions -->
-                        <div class="flex items-center justify-end gap-3 pt-4 border-t">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                @click="handleCancel"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                :disabled="form.processing || isFormInvalid"
-                            >
-                                {{ form.processing ? 'Creating...' : 'Create Product' }}
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
-    </AppLayout>
+    <ModalForm
+        v-model:open="isOpen"
+        title="Create Product"
+        description="Add a new product to your inventory"
+        mode="create"
+        size="2xl"
+        submit-text="Create Product"
+        :loading="form.processing"
+        :disabled="isFormInvalid"
+        @submit="handleSubmit"
+        @cancel="handleCancel"
+    >
+        <ProductForm
+            v-model="form"
+            mode="create"
+            :outlets="props.outlets"
+            :products="props.products"
+            :categories="props.categories"
+        />
+    </ModalForm>
 </template>
