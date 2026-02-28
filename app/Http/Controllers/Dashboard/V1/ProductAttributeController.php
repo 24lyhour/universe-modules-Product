@@ -3,16 +3,20 @@
 namespace Modules\Product\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Modules\Product\Actions\Dashboard\V1\BulkDeleteProductAttributesAction;
 use Modules\Product\Actions\Dashboard\V1\CreateProductAttributeAction;
 use Modules\Product\Actions\Dashboard\V1\DeleteProductAttributeAction;
 use Modules\Product\Actions\Dashboard\V1\UpdateProductAttributeAction;
+use Modules\Product\Http\Requests\BulkDeleteProductAttributesRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\Attribute\StoreProductAttributeRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\Attribute\UpdateProductAttributeRequest;
 use Modules\Product\Http\Resources\ProductAttributeResource;
 use Modules\Product\Models\ProductAttribute;
 use Modules\Product\Services\ProductAttributeService;
+use Momentum\Modal\Modal;
 
 class ProductAttributeController extends Controller
 {
@@ -117,5 +121,44 @@ class ProductAttributeController extends Controller
         $this->attributeService->toggleStatus($attribute);
 
         return back()->with('success', 'Attribute status updated.');
+    }
+
+    /**
+     * Show bulk delete confirmation modal.
+     */
+    public function confirmBulkDelete(Request $request): Modal
+    {
+        $uuids = $request->input('uuids', []);
+
+        $attributes = ProductAttribute::whereIn('uuid', $uuids)
+            ->withCount('values')
+            ->get(['id', 'uuid', 'name', 'type']);
+
+        return Inertia::modal('product::dashboard/attribute/BulkDelete', [
+            'attributeItems' => $attributes->map(fn ($a) => [
+                'id' => $a->id,
+                'uuid' => $a->uuid,
+                'name' => $a->name,
+                'type' => $a->type,
+                'values_count' => $a->values_count,
+            ])->toArray(),
+        ])->baseRoute('dashboard.product.attributes.index');
+    }
+
+    /**
+     * Bulk delete attributes.
+     */
+    public function bulkDelete(BulkDeleteProductAttributesRequest $request, BulkDeleteProductAttributesAction $action): RedirectResponse
+    {
+        $result = $action->execute($request->validated('uuids'));
+
+        $message = "{$result['deleted']} attribute(s) deleted successfully.";
+
+        if ($result['failed'] > 0) {
+            $message .= " {$result['failed']} attribute(s) could not be found.";
+        }
+
+        return redirect()->route('dashboard.product.attributes.index')
+            ->with('success', $message);
     }
 }

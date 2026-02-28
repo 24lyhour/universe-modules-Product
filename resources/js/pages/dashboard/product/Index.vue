@@ -12,11 +12,13 @@ import {
     Star,
     AlertTriangle,
     Layers,
-    Tags,
     ArrowUpCircle,
     PlusCircle,
-    Palette,
     Settings,
+    Database,
+    Upload,
+    Download,
+    FileSpreadsheet,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -39,6 +41,7 @@ import {
     TableReusable,
     ModalConfirm,
     StatsCard,
+    ButtonGroup,
     type TableColumn,
     type TableAction,
 } from '@/components/shared';
@@ -59,6 +62,9 @@ const props = defineProps<ProductIndexProps>();
 const searchQuery = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || '');
 const outletFilter = ref(props.filters.outlet_id?.toString() || '');
+
+// Selection state
+const selectedUuids = ref<(string | number)[]>([]);
 
 // Delete modal state
 const isDeleteModalOpen = ref(false);
@@ -157,6 +163,30 @@ const handleDelete = () => {
 
 const toggleFeatured = (product: Product) => {
     router.patch(`/dashboard/products/${product.id}/toggle-featured`);
+};
+
+const openBulkDeleteDialog = () => {
+    const params = new URLSearchParams();
+    selectedUuids.value.forEach((uuid) => {
+        params.append('uuids[]', String(uuid));
+    });
+    router.visit(`/dashboard/products/bulk-delete?${params.toString()}`);
+};
+
+const handleTrash = () => {
+    router.visit('/dashboard/products/trash');
+};
+
+const handleImport = () => {
+    router.visit('/dashboard/products/import');
+};
+
+const handleExport = () => {
+    window.location.href = '/dashboard/products/export';
+};
+
+const handleTemplate = () => {
+    window.location.href = '/dashboard/products/template';
 };
 
 const handlePageChange = (page: number) => {
@@ -259,6 +289,30 @@ const tableData = computed(() => {
                     <p class="text-muted-foreground">Manage your products inventory</p>
                 </div>
                 <div class="flex items-center gap-2">
+                    <ButtonGroup>
+                        <Button variant="default">
+                            <Database class="mr-2 h-4 w-4" />
+                            All
+                        </Button>
+                        <Button variant="outline" @click="handleTrash">
+                            <Trash2 class="mr-2 h-4 w-4" />
+                            Trash
+                        </Button>
+                    </ButtonGroup>
+                    <ButtonGroup>
+                        <Button variant="outline" @click="handleImport">
+                            <Upload class="mr-2 h-4 w-4" />
+                            Import
+                        </Button>
+                        <Button variant="outline" @click="handleExport">
+                            <Download class="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                        <Button variant="outline" @click="handleTemplate">
+                            <FileSpreadsheet class="mr-2 h-4 w-4" />
+                            Template
+                        </Button>
+                    </ButtonGroup>
                     <Button variant="outline" as-child>
                         <Link href="/dashboard/products/settings">
                             <Settings class="mr-2 h-4 w-4" />
@@ -309,16 +363,27 @@ const tableData = computed(() => {
 
             <!-- Table -->
             <TableReusable
+                v-model:selected="selectedUuids"
                 :data="tableData"
                 :columns="columns"
                 :actions="tableActions"
                 :pagination="pagination"
                 :searchable="true"
+                :selectable="true"
+                select-key="uuid"
                 search-placeholder="Search products by name or SKU..."
                 @page-change="handlePageChange"
                 @per-page-change="handlePerPageChange"
                 @search="handleSearch"
             >
+                <!-- Bulk Actions -->
+                <template #bulk-actions>
+                    <Button variant="destructive" size="sm" @click="openBulkDeleteDialog">
+                        <Trash2 class="mr-2 h-4 w-4" />
+                        Delete Selected
+                    </Button>
+                </template>
+
                 <!-- Toolbar slot for filters -->
                 <template #toolbar>
                     <div class="flex flex-wrap items-center gap-2">

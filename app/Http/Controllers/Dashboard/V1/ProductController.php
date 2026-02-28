@@ -3,20 +3,35 @@
 namespace Modules\Product\Http\Controllers\Dashboard\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Modules\Product\Actions\Dashboard\V1\BulkDeleteProductsAction;
 use Modules\Product\Actions\Dashboard\V1\UpdateProductSettingsAction;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Menu\Models\Category;
 use Modules\Outlet\Models\Outlet;
+use Modules\Product\Http\Requests\BulkDeleteProductsRequest;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
 use Modules\Product\Http\Resources\ProductAttributeResource;
 use Modules\Product\Http\Resources\ProductResource;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Exports\ProductsExport;
+use Modules\Product\Imports\ProductsImport;
 use Modules\Product\Services\ProductService;
+use Maatwebsite\Excel\Facades\Excel;
 use Momentum\Modal\Modal;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
@@ -217,5 +232,315 @@ class ProductController extends Controller
 
         return redirect()->route('product.products.show', $product)
             ->with('success', 'Product attributes updated successfully.');
+    }
+
+    /**
+     * Show bulk delete confirmation modal.
+     */
+    public function confirmBulkDelete(Request $request): Modal
+    {
+        $uuids = $request->input('uuids', []);
+
+        $products = Product::whereIn('uuid', $uuids)
+            ->withCount('variants')
+            ->get(['id', 'uuid', 'name', 'sku', 'status']);
+
+        return Inertia::modal('product::dashboard/product/BulkDelete', [
+            'productItems' => $products->map(fn ($p) => [
+                'id' => $p->id,
+                'uuid' => $p->uuid,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'status' => $p->status,
+                'variants_count' => $p->variants_count,
+            ])->toArray(),
+        ])->baseRoute('product.products.index');
+    }
+
+    /**
+     * Bulk delete products.
+     */
+    public function bulkDelete(BulkDeleteProductsRequest $request, BulkDeleteProductsAction $action): RedirectResponse
+    {
+        $result = $action->execute($request->validated('uuids'));
+
+        $message = "{$result['deleted']} product(s) deleted successfully.";
+
+        if ($result['failed'] > 0) {
+            $message .= " {$result['failed']} product(s) could not be found.";
+        }
+
+        return redirect()->route('product.products.index')
+            ->with('success', $message);
+    }
+
+    /**
+     * Display trash listing.
+     */
+    public function trash(Request $request): Response
+    {
+        $perPage = $request->integer('per_page', 10);
+        $search = $request->input('search');
+
+        $query = Product::onlyTrashed()
+            ->select(['id', 'uuid', 'name', 'deleted_at'])
+            ->latest('deleted_at');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $trashItems = $query->paginate($perPage);
+
+        return Inertia::render('product::dashboard/product/Trash', [
+            'trashItems' => [
+                'data' => $trashItems->map(fn ($item) => [
+                    'id' => $item->id,
+                    'uuid' => $item->uuid,
+                    'display_name' => $item->name,
+                    'type' => 'product',
+                    'deleted_at' => $item->deleted_at?->toISOString(),
+                ]),
+                'meta' => [
+                    'current_page' => $trashItems->currentPage(),
+                    'last_page' => $trashItems->lastPage(),
+                    'per_page' => $trashItems->perPage(),
+                    'total' => $trashItems->total(),
+                ],
+            ],
+            'config' => [
+                'entityLabel' => 'Product',
+                'entityLabelPlural' => 'Products',
+            ],
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
+        ]);
+    }
+
+    /**
+     * Restore a trashed product.
+     */
+    public function restore(string $uuid): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->where('uuid', $uuid)->firstOrFail();
+        $product->restore();
+
+        return redirect()->back()->with('success', 'Product restored successfully.');
+    }
+
+    /**
+     * Permanently delete a product.
+     */
+    public function forceDelete(string $uuid): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->where('uuid', $uuid)->firstOrFail();
+        $product->forceDelete();
+
+        return redirect()->back()->with('success', 'Product permanently deleted.');
+    }
+
+    /**
+     * Empty all trash.
+     */
+    public function emptyTrash(): RedirectResponse
+    {
+        $deleted = Product::onlyTrashed()->forceDelete();
+
+        return redirect()->back()->with('success', "{$deleted} product(s) permanently deleted.");
+    }
+
+    /**
+     * Bulk restore products from trash.
+     */
+    public function bulkRestore(Request $request): RedirectResponse
+    {
+        $uuids = $request->input('uuids', []);
+
+        if (empty($uuids)) {
+            return redirect()->back()->with('error', 'No items selected for restore.');
+        }
+
+        $restored = Product::onlyTrashed()->whereIn('uuid', $uuids)->restore();
+
+        return redirect()->back()->with('success', "{$restored} product(s) restored successfully.");
+    }
+
+    /**
+     * Bulk force delete products from trash.
+     */
+    public function bulkForceDelete(Request $request): RedirectResponse
+    {
+        $uuids = $request->input('uuids', []);
+
+        if (empty($uuids)) {
+            return redirect()->back()->with('error', 'No items selected for deletion.');
+        }
+
+        $deleted = Product::onlyTrashed()->whereIn('uuid', $uuids)->forceDelete();
+
+        return redirect()->back()->with('success', "{$deleted} product(s) permanently deleted.");
+    }
+
+    protected array $duplicateOptions = [
+        ['value' => 'skip', 'label' => 'Skip duplicates', 'description' => 'Skip rows with existing SKU'],
+        ['value' => 'update', 'label' => 'Update existing', 'description' => 'Update existing products with new data'],
+        ['value' => 'fail', 'label' => 'Fail on duplicate', 'description' => 'Stop import if duplicates found'],
+    ];
+
+    /**
+     * Show import page.
+     */
+    public function import(): Response
+    {
+        return Inertia::render('product::dashboard/product/Import', [
+            'duplicateOptions' => $this->duplicateOptions,
+        ]);
+    }
+
+    /**
+     * Preview import file.
+     */
+    public function previewImport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $duplicateHandling = $request->input('duplicate_handling', 'skip');
+
+            $import = new ProductsImport($duplicateHandling, true);
+            Excel::import($import, $file);
+
+            $previewData = $import->getPreviewData();
+            $results = $import->getResults();
+
+            return response()->json([
+                'success' => true,
+                'preview' => $previewData,
+                'stats' => $results['preview_stats'],
+                'total_rows' => count($previewData),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Preview failed: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Process import file.
+     */
+    public function processImport(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $duplicateHandling = $request->input('duplicate_handling', 'skip');
+
+            $import = new ProductsImport($duplicateHandling, false);
+            Excel::import($import, $file);
+
+            $results = $import->getResults();
+
+            $messages = [];
+            if ($results['imported'] > 0) $messages[] = "{$results['imported']} imported";
+            if ($results['updated'] > 0) $messages[] = "{$results['updated']} updated";
+            if ($results['skipped'] > 0) $messages[] = "{$results['skipped']} skipped";
+            if ($results['failed'] > 0) $messages[] = "{$results['failed']} failed";
+
+            $message = 'Import completed: ' . implode(', ', $messages);
+
+            if ($results['failed'] > 0) {
+                session()->flash('import_failed_rows', $results['failed_rows']);
+                return redirect()->route('product.products.index')->with('warning', $message);
+            }
+
+            return redirect()->route('product.products.index')->with('success', $message);
+        } catch (\Exception $e) {
+            return redirect()->route('product.products.import')->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export products to Excel.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $filters = $request->only(['search', 'status', 'outlet_id']);
+        $filename = 'products_' . now()->format('Y-m-d_His') . '.xlsx';
+        return Excel::download(new ProductsExport($filters), $filename);
+    }
+
+    /**
+     * Download import template.
+     */
+    public function template(): BinaryFileResponse
+    {
+        $headers = ['Name', 'SKU', 'Description', 'Price', 'Purchase Price', 'Sale Price', 'Stock', 'Low Stock Threshold', 'Status'];
+        $sampleData = ['Sample Product', 'SKU-001', 'Product description here', '99.99', '50.00', '89.99', '100', '10', 'active'];
+        $instructions = [
+            'Name and Price are required fields',
+            'SKU is used for duplicate detection',
+            'If SKU matches existing product, it will be updated based on duplicate handling setting',
+            'Status: active, inactive, draft, or out_of_stock (defaults to draft)',
+            'Stock and Low Stock Threshold: integer values',
+        ];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products Import Template');
+
+        // Add headers
+        foreach ($headers as $index => $header) {
+            $column = Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($column . '1', $header);
+        }
+
+        // Style header row
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+        ]);
+
+        // Auto-size columns
+        foreach (range('A', $lastColumn) as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // Add sample data
+        foreach ($sampleData as $index => $value) {
+            $column = Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($column . '2', $value);
+        }
+        $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setItalic(true);
+
+        // Add instructions sheet
+        $instructionsSheet = $spreadsheet->createSheet();
+        $instructionsSheet->setTitle('Instructions');
+        $instructionsSheet->setCellValue('A1', 'Import Instructions');
+        $instructionsSheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+        $row = 3;
+        foreach ($instructions as $index => $instruction) {
+            $instructionsSheet->setCellValue('A' . $row, ($index + 1) . '. ' . $instruction);
+            $row++;
+        }
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'products_template_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, 'products_import_template.xlsx')->deleteFileAfterSend(true);
     }
 }

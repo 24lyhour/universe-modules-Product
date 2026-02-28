@@ -18,6 +18,12 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         Route::post('products/settings', [ProductSettingsController::class, 'update'])
             ->name('dashboard.product.settings.update');
 
+        // Product Attributes Bulk Delete (must be before resource to avoid conflict)
+        Route::get('products/attributes/bulk-delete', [ProductAttributeController::class, 'confirmBulkDelete'])
+            ->name('dashboard.product.attributes.bulk-delete.confirm');
+        Route::delete('products/attributes/bulk-delete', [ProductAttributeController::class, 'bulkDelete'])
+            ->name('dashboard.product.attributes.bulk-delete');
+
         // Product Attributes CRUD (must be before products resource to avoid conflict)
         Route::resource('products/attributes', ProductAttributeController::class)
             ->names('dashboard.product.attributes')
@@ -32,6 +38,38 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
             ->name('dashboard.product.addons.create-standalone');
         Route::post('products/addons', [ProductAddOnController::class, 'storeStandalone'])
             ->name('dashboard.product.addons.store-standalone');
+
+        // Products Bulk Delete (must be before products resource to avoid conflict)
+        Route::get('products/bulk-delete', [ProductController::class, 'confirmBulkDelete'])
+            ->name('product.products.bulk-delete.confirm');
+        Route::delete('products/bulk-delete', [ProductController::class, 'bulkDelete'])
+            ->name('product.products.bulk-delete');
+
+        // Products Trash (must be before products resource to avoid conflict)
+        Route::get('products/trash', [ProductController::class, 'trash'])
+            ->name('product.products.trash');
+        Route::delete('products/trash/empty', [ProductController::class, 'emptyTrash'])
+            ->name('product.products.trash.empty');
+        Route::put('products/trash/bulk-restore', [ProductController::class, 'bulkRestore'])
+            ->name('product.products.trash.bulk-restore');
+        Route::delete('products/trash/bulk-force-delete', [ProductController::class, 'bulkForceDelete'])
+            ->name('product.products.trash.bulk-force-delete');
+        Route::put('products/{uuid}/restore', [ProductController::class, 'restore'])
+            ->name('product.products.restore');
+        Route::delete('products/{uuid}/force-delete', [ProductController::class, 'forceDelete'])
+            ->name('product.products.force-delete');
+
+        // Products Import/Export/Template (must be before products resource to avoid conflict)
+        Route::get('products/import', [ProductController::class, 'import'])
+            ->name('product.products.import');
+        Route::post('products/import/preview', [ProductController::class, 'previewImport'])
+            ->name('product.products.import.preview');
+        Route::post('products/import', [ProductController::class, 'processImport'])
+            ->name('product.products.import.process');
+        Route::get('products/export', [ProductController::class, 'export'])
+            ->name('product.products.export');
+        Route::get('products/template', [ProductController::class, 'template'])
+            ->name('product.products.template');
 
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');

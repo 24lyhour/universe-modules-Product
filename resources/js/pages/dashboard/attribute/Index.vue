@@ -44,6 +44,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 const searchQuery = ref(props.filters.search || '');
 const typeFilter = ref(props.filters.type || '');
 
+// Selection state
+const selectedUuids = ref<(string | number)[]>([]);
+
 // Delete modal state
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
@@ -123,6 +126,14 @@ const handleDelete = () => {
 
 const toggleStatus = (attribute: ProductAttribute) => {
     router.patch(`/dashboard/products/attributes/${attribute.id}/toggle-status`);
+};
+
+const openBulkDeleteDialog = () => {
+    const params = new URLSearchParams();
+    selectedUuids.value.forEach((uuid) => {
+        params.append('uuids[]', String(uuid));
+    });
+    router.visit(`/dashboard/products/attributes/bulk-delete?${params.toString()}`);
 };
 
 const handlePageChange = (page: number) => {
@@ -232,16 +243,27 @@ const formatDate = (date: string) => {
 
             <!-- Table -->
             <TableReusable
+                v-model:selected="selectedUuids"
                 :data="props.attributes.data"
                 :columns="columns"
                 :actions="tableActions"
                 :pagination="pagination"
                 :searchable="true"
+                :selectable="true"
+                select-key="uuid"
                 search-placeholder="Search attributes..."
                 @page-change="handlePageChange"
                 @per-page-change="handlePerPageChange"
                 @search="handleSearch"
             >
+                <!-- Bulk Actions -->
+                <template #bulk-actions>
+                    <Button variant="destructive" size="sm" @click="openBulkDeleteDialog">
+                        <Trash2 class="mr-2 h-4 w-4" />
+                        Delete Selected
+                    </Button>
+                </template>
+
                 <!-- Toolbar slot for filters -->
                 <template #toolbar>
                     <div class="flex items-center gap-2">
