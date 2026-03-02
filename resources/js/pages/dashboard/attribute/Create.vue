@@ -4,7 +4,6 @@ import { ArrowLeft } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { type BreadcrumbItem } from '@/types';
 import AttributeForm from '../../components/AttributeForm.vue';
 import type { ProductAttributeValueFormData } from '../../../types';
@@ -70,23 +69,21 @@ const handleSubmit = () => {
                 <AttributeForm v-model="form" mode="create" />
 
                 <!-- Actions -->
-                <Card>
-                    <CardContent class="pt-6 flex gap-3 justify-end">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            as-child
-                        >
-                            <Link href="/dashboard/products/attributes">Cancel</Link>
-                        </Button>
-                        <Button
-                            type="submit"
-                            :disabled="form.processing"
-                        >
-                            {{ form.processing ? 'Creating...' : 'Create Attribute' }}
-                        </Button>
-                    </CardContent>
-                </Card>
+                <div class="flex gap-3 justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        as-child
+                    >
+                        <Link href="/dashboard/products/attributes">Cancel</Link>
+                    </Button>
+                    <Button
+                        type="submit"
+                        :disabled="form.processing"
+                    >
+                        {{ form.processing ? 'Creating...' : 'Create Attribute' }}
+                    </Button>
+                </div>
             </form>
         </div>
     </AppLayout>

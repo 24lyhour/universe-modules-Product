@@ -5,7 +5,7 @@ import { Plus, Trash2, GripVertical } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import TiptapEditor from '@/components/TiptapEditor.vue';
 import { Switch } from '@/components/ui/switch';
 import {
     Select,
@@ -22,6 +22,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { InertiaForm } from '@inertiajs/vue3';
 import type { AttributeType, ProductAttributeValueFormData } from '../../types';
 
@@ -88,16 +89,17 @@ const isColorType = computed(() => model.value.type === 'color');
 
 <template>
     <div class="space-y-6">
-        <!-- Basic Information Section -->
-        <Card>
-            <CardHeader>
-                <CardTitle>Attribute Information</CardTitle>
-                <CardDescription>
-                    {{ mode === 'create' ? 'Define the attribute details' : 'Update the attribute details' }}
-                </CardDescription>
-            </CardHeader>
-            <CardContent class="space-y-4">
-                <div class="grid gap-4 sm:grid-cols-2">
+        <!-- Grid Layout for Information and Values -->
+        <div class="grid gap-6 lg:grid-cols-3">
+            <!-- Basic Information Section -->
+            <Card class="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Attribute Information</CardTitle>
+                    <CardDescription>
+                        {{ mode === 'create' ? 'Define the attribute details' : 'Update the attribute details' }}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
                     <div class="space-y-2">
                         <Label for="name">Name <span class="text-destructive">*</span></Label>
                         <Input
@@ -131,22 +133,50 @@ const isColorType = computed(() => model.value.type === 'color');
                             How this attribute will be displayed to customers
                         </p>
                     </div>
-                </div>
 
-                <div class="space-y-2">
-                    <Label for="description">Description</Label>
-                    <Textarea
-                        id="description"
-                        v-model="model.description"
-                        placeholder="Describe this attribute (optional)..."
-                        rows="2"
-                    />
-                </div>
-            </CardContent>
-        </Card>
+                    <div class="space-y-2">
+                        <Label for="description">Description</Label>
+                        <TiptapEditor
+                            v-model="model.description"
+                            placeholder="Describe this attribute (optional)..."
+                            min-height="150px"
+                            max-height="300px"
+                        />
+                    </div>
 
-        <!-- Values Section -->
-        <Card>
+                    <!-- Settings moved here -->
+                    <Separator class="my-4" />
+
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <Label for="sort_order">Sort Order</Label>
+                            <Input
+                                id="sort_order"
+                                v-model.number="model.sort_order"
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                            />
+                            <p class="text-xs text-muted-foreground">Lower numbers appear first</p>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                                <Label for="is_active">Active</Label>
+                                <p class="text-xs text-muted-foreground">Enable this attribute</p>
+                            </div>
+                            <Switch
+                                id="is_active"
+                                :checked="model.is_active"
+                                @update:checked="model.is_active = $event"
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- Values Section -->
+            <Card class="lg:col-span-2">
             <CardHeader>
                 <div class="flex items-center justify-between">
                     <div>
@@ -164,7 +194,8 @@ const isColorType = computed(() => model.value.type === 'color');
                     No values yet. Click "Add Value" to add one.
                 </div>
 
-                <div v-else class="space-y-4">
+                <ScrollArea v-else class="max-h-[500px] pr-4">
+                <div class="space-y-4">
                     <div
                         v-for="(value, index) in model.values"
                         :key="value._key"
@@ -231,41 +262,9 @@ const isColorType = computed(() => model.value.type === 'color');
                         </Button>
                     </div>
                 </div>
+                </ScrollArea>
             </CardContent>
         </Card>
-
-        <!-- Settings Section -->
-        <Card>
-            <CardHeader>
-                <CardTitle>Settings</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-4">
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="space-y-2">
-                        <Label for="sort_order">Sort Order</Label>
-                        <Input
-                            id="sort_order"
-                            v-model.number="model.sort_order"
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                        />
-                        <p class="text-xs text-muted-foreground">Lower numbers appear first</p>
-                    </div>
-
-                    <div class="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                            <Label for="is_active">Active</Label>
-                            <p class="text-xs text-muted-foreground">Enable this attribute</p>
-                        </div>
-                        <Switch
-                            id="is_active"
-                            :checked="model.is_active"
-                            @update:checked="model.is_active = $event"
-                        />
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+        </div>
     </div>
 </template>
