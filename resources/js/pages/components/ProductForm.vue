@@ -269,6 +269,8 @@ const formatCurrency = (value: number) => {
                     <TiptapEditor
                         v-model="editorContent"
                         placeholder="Enter detailed product description with formatting..."
+                        min-height="250px"
+                        max-height="500px"
                     />
                     <p v-if="model.errors.description" class="text-sm text-destructive">
                         {{ model.errors.description }}

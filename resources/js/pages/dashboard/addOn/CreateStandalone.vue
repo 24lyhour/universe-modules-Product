@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
+import TiptapEditor from '@/components/TiptapEditor.vue';
 import { ImageUpload } from '@/components/shared';
 import {
     Select,
@@ -167,11 +167,11 @@ const handleCancel = () => {
 
                     <div class="space-y-2">
                         <Label for="description">Description</Label>
-                        <Textarea
-                            id="description"
+                        <TiptapEditor
                             v-model="form.description"
-                            placeholder="Custom description for this add-on (optional)"
-                            rows="3"
+                            placeholder="Custom description for this add-on (optional)..."
+                            min-height="120px"
+                            max-height="250px"
                         />
                     </div>
 
