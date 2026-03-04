@@ -28,6 +28,7 @@ const form = useForm<ProductFormData>({
     description: '',
     sku: '',
     product_type: null,
+    product_type_id: null,
     price: 0,
     purchase_price: null,
     sale_price: null,
@@ -43,7 +44,7 @@ const form = useForm<ProductFormData>({
     down_sale_id: null,
 });
 
-const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price']);
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price', 'product_type_id', 'outlet_id']);
 
 /**
  * Generate SKU from product name using settings
@@ -78,7 +79,8 @@ const getFormData = () => ({
     name: form.name,
     description: form.description || null,
     sku: form.sku || null,
-    product_type: form.product_type || null,
+    product_type: form.product_type,
+    product_type_id: form.product_type_id,
     price: form.price,
     purchase_price: form.purchase_price,
     sale_price: form.sale_price,
@@ -107,13 +109,15 @@ watch(
 );
 
 /**
- * Check the validation form required - name, price and sale_price are required
+ * Check the validation form required - name, price, sale_price, product_type_id, outlet_id are required
  */
 const isFormInvalid = computed(() => {
     const nameValid = form.name && form.name.trim() !== '';
     const priceValid = form.price > 0;
     const salePriceValid = form.sale_price !== null && form.sale_price > 0;
-    return !nameValid || !priceValid || !salePriceValid;
+    const productTypeValid = form.product_type_id !== null;
+    const outletValid = form.outlet_id !== null;
+    return !nameValid || !priceValid || !salePriceValid || !productTypeValid || !outletValid;
 });
 
 const handleSubmit = () => {
@@ -152,6 +156,7 @@ const handleCancel = () => {
             :outlets="props.outlets"
             :products="props.products"
             :categories="props.categories"
+            :product-types="props.productTypes"
         />
     </ModalForm>
 </template>

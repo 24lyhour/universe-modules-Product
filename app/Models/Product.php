@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Product\Database\Factories\ProductFactory;
 use Modules\Menu\Models\Category;
+use Modules\Product\Models\ProductType;
 use Modules\Outlet\Models\Outlet;
 use App\Models\User;
 
@@ -34,6 +35,7 @@ class Product extends Model
         'sku',
         'price',
         'product_type',
+        'product_type_id',
         'purchase_price',
         'sale_price',
         'stock',
@@ -270,6 +272,14 @@ class Product extends Model
     public function usedAsAddOnIn(): HasMany
     {
         return $this->hasMany(ProductAddOn::class, 'add_on_product_id');
+    }
+
+    /**
+     * Relation to the product type.
+     */
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class, 'product_type_id');
     }
 
     /**

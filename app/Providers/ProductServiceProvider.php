@@ -51,6 +51,18 @@ class ProductServiceProvider extends ServiceProvider
                 'product.products.*'
             );
 
+            // Product Type
+            MenuService::addSubmenuItem(
+                'primary',
+                'product',
+                __('Product Types'),
+                '/dashboard/product-types',
+                15,
+                'product_types.view_any',
+                'product.product-types.index',
+                'PackageSearch'
+            );
+
             // Product submenu
             MenuService::addSubmenuItem(
                 'primary',

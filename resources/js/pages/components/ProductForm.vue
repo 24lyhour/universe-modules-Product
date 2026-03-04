@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,22 +14,14 @@ import { Separator } from '@/components/ui/separator';
 import { ImageUpload } from '@/components/shared';
 import TiptapEditor from '@/components/TiptapEditor.vue';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductFormData, Outlet, ProductType, ProductSimple, ProductCategory } from '../../types';
-
-// Product type options
-const productTypeOptions: { value: ProductType; label: string }[] = [
-    { value: 'phone', label: 'Phone' },
-    { value: 'computer', label: 'Computer' },
-    { value: 'tablet', label: 'Tablet' },
-    { value: 'accessory', label: 'Accessory' },
-    { value: 'other', label: 'Other' },
-];
+import type { ProductFormData, Outlet, ProductSimple, ProductCategory, ProductTypeItem } from '../../types';
 
 interface Props {
     mode?: 'create' | 'edit';
     outlets?: Outlet[];
     products?: ProductSimple[];
     categories?: ProductCategory[];
+    productTypes?: ProductTypeItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,6 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
     outlets: () => [],
     products: () => [],
     categories: () => [],
+    productTypes: () => [],
 });
 
 const model = defineModel<InertiaForm<ProductFormData>>({ required: true });
@@ -44,11 +37,11 @@ const model = defineModel<InertiaForm<ProductFormData>>({ required: true });
 // Placeholder value for "None" option (empty string not allowed by SelectItem)
 const NONE_VALUE = '__none__';
 
-// Convert product_type to string for Select component
-const productTypeString = computed({
-    get: () => model.value.product_type ?? NONE_VALUE,
+// Convert product_type_id to string for Select component
+const productTypeIdString = computed({
+    get: () => model.value.product_type_id?.toString() ?? NONE_VALUE,
     set: (val: string) => {
-        model.value.product_type = val === NONE_VALUE ? null : (val as ProductType);
+        model.value.product_type_id = val === NONE_VALUE ? null : Number(val);
     },
 });
 
@@ -68,25 +61,8 @@ const categoryIdString = computed({
     },
 });
 
-// Filter categories based on selected product type
-const filteredCategories = computed(() => {
-    if (!model.value.product_type) {
-        return props.categories;
-    }
-    return props.categories.filter(
-        cat => cat.product_type === null || cat.product_type === model.value.product_type
-    );
-});
-
-// Clear category when product type changes and current category is incompatible
-watch(() => model.value.product_type, (newType) => {
-    if (model.value.category_id) {
-        const currentCategory = props.categories.find(c => c.id === model.value.category_id);
-        if (currentCategory && currentCategory.product_type !== null && currentCategory.product_type !== newType) {
-            model.value.category_id = null;
-        }
-    }
-});
+// Categories are no longer filtered by product type since we now use database-driven ProductType
+const filteredCategories = computed(() => props.categories);
 
 // Status type alias
 type ProductStatus = 'active' | 'inactive' | 'draft' | 'out_of_stock';
@@ -159,39 +135,33 @@ const formatCurrency = (value: number) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="product_type">Product Type</Label>
-                    <Select v-model="productTypeString">
+                    <Label for="product_type_id">Product Type <span class="text-destructive">*</span></Label>
+                    <Select v-model="productTypeIdString">
                         <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select product type" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
-                            <SelectItem :value="NONE_VALUE">
-                                None
-                            </SelectItem>
                             <SelectItem
-                                v-for="option in productTypeOptions"
-                                :key="option.value"
-                                :value="option.value"
+                                v-for="productType in props.productTypes"
+                                :key="productType.id"
+                                :value="productType.id.toString()"
                             >
-                                {{ option.label }}
+                                {{ productType.name }}
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <p v-if="model.errors.product_type" class="text-sm text-destructive">
-                        {{ model.errors.product_type }}
+                    <p v-if="model.errors.product_type_id" class="text-sm text-destructive">
+                        {{ model.errors.product_type_id }}
                     </p>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="outlet_id">Outlet</Label>
+                    <Label for="outlet_id">Outlet <span class="text-destructive">*</span></Label>
                     <Select v-model="outletIdString">
                         <SelectTrigger class="w-full">
                             <SelectValue placeholder="Select outlet" />
                         </SelectTrigger>
                         <SelectContent class="z-200">
-                            <SelectItem :value="NONE_VALUE">
-                                None
-                            </SelectItem>
                             <SelectItem
                                 v-for="outlet in props.outlets"
                                 :key="outlet.id"
@@ -227,9 +197,6 @@ const formatCurrency = (value: number) => {
                     </Select>
                     <p v-if="model.errors.category_id" class="text-sm text-destructive">
                         {{ model.errors.category_id }}
-                    </p>
-                    <p v-if="model.product_type && filteredCategories.length === 0" class="text-xs text-muted-foreground">
-                        No categories for this product type
                     </p>
                 </div>
 

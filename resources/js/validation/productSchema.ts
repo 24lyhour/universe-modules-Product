@@ -13,10 +13,8 @@ export const productSchema = z.object({
         .max(100, 'SKU must be less than 100 characters')
         .optional()
         .nullable(),
-    product_type: z
-        .enum(['phone', 'computer', 'tablet', 'accessory', 'other'])
-        .optional()
-        .nullable(),
+    product_type: z.enum(['phone', 'computer', 'tablet', 'accessory', 'other']).optional().nullable(),
+    product_type_id: z.number({ required_error: 'Product type is required' }).int(),
     price: z
         .number({ required_error: 'Price is required' })
         .min(0.01, 'Price must be greater than 0'),
@@ -45,7 +43,7 @@ export const productSchema = z.object({
     pre_order: z.boolean().default(false),
     images: z.array(z.string()).optional().nullable(),
     category_id: z.number().int().optional().nullable(),
-    outlet_id: z.number().int().optional().nullable(),
+    outlet_id: z.number({ required_error: 'Outlet is required' }).int(),
 });
 
 // TypedSchema for vee-validate

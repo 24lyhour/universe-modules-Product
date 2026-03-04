@@ -52,7 +52,9 @@ export interface Product {
     slug: string;
     description: string | null;
     sku: string | null;
-    product_type: ProductType | null;
+    product_type: ProductType;
+    product_type_id: number | null;
+    productType?: ProductTypeItem | null;
     price: number;
     purchase_price: number | null;
     sale_price: number | null;
@@ -90,7 +92,7 @@ export interface Product {
 export interface ProductCategory {
     id: number;
     name: string;
-    product_type: ProductType | null;
+    product_type: ProductType;
 }
 
 export interface ProductSimple {
@@ -151,12 +153,13 @@ export interface ProductFilters {
     max_price?: number;
 }
 
-// Form Data Types
+// Form Data Types (allows null for initial form state, validation enforces required fields)
 export interface ProductFormData {
     name: string;
     description: string;
     sku: string;
     product_type: ProductType | null;
+    product_type_id: number | null;
     price: number;
     purchase_price: number | null;
     sale_price: number | null;
@@ -195,6 +198,7 @@ export interface ProductCreateProps {
     categories?: ProductCategory[];
     outlets?: Outlet[];
     products?: ProductSimple[];
+    productTypes?: ProductTypeItem[];
     productSettings?: ProductSettings;
 }
 
@@ -203,6 +207,7 @@ export interface ProductEditProps {
     categories?: ProductCategory[];
     outlets?: Outlet[];
     products?: ProductSimple[];
+    productTypes?: ProductTypeItem[];
 }
 
 // ==================== VARIATION TYPES ====================
@@ -523,4 +528,59 @@ export interface ProductVariantEditProps {
     product: Product;
     variant: ProductVariant;
     attributes: ProductAttribute[];
+}
+
+// ==================== PRODUCT TYPE TYPES ====================
+
+export interface ProductTypeItem {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    outlet_id: number;
+    outlet?: {
+        id: number;
+        name: string;
+    };
+    sort_order: number;
+    is_active: boolean;
+    products_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ProductTypeFormData {
+    name: string;
+    description: string;
+    outlet_id: number | null;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface ProductTypeStats {
+    total: number;
+    active: number;
+    inactive: number;
+}
+
+export interface ProductTypeFilters {
+    search?: string;
+    is_active?: boolean;
+    outlet_id?: number;
+}
+
+export interface ProductTypeIndexProps {
+    productTypes: PaginatedResponse<ProductTypeItem>;
+    filters: ProductTypeFilters;
+    stats: ProductTypeStats;
+}
+
+export interface ProductTypeCreateProps {
+    outlets: Outlet[];
+}
+
+export interface ProductTypeEditProps {
+    productType: ProductTypeItem;
+    outlets: Outlet[];
 }

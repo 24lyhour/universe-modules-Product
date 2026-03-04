@@ -20,6 +20,15 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'sku' => $this->sku,
             'product_type' => $this->product_type,
+            'product_type_id' => $this->product_type_id,
+            'productType' => $this->whenLoaded('productType', function () {
+                return [
+                    'id' => $this->productType->id,
+                    'uuid' => $this->productType->uuid,
+                    'name' => $this->productType->name,
+                    'slug' => $this->productType->slug,
+                ];
+            }),
             'price' => (float) $this->price,
             'purchase_price' => $this->purchase_price ? (float) $this->purchase_price : null,
             'sale_price' => $this->sale_price ? (float) $this->sale_price : null,

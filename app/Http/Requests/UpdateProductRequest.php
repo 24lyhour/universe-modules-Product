@@ -30,6 +30,7 @@ class UpdateProductRequest extends FormRequest
                 Rule::unique('products', 'sku')->ignore($this->route('product')),
             ],
             'product_type' => ['nullable', 'in:phone,computer,tablet,accessory,other'],
+            'product_type_id' => ['required', 'integer', 'exists:product_types,id'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
@@ -41,7 +42,7 @@ class UpdateProductRequest extends FormRequest
             'images' => ['nullable', 'array'],
             'images.*' => ['string', 'url'],
             'category_id' => ['nullable', 'integer', 'exists:menu_categories,id'],
-            'outlet_id' => ['nullable', 'integer', 'exists:outlets,id'],
+            'outlet_id' => ['required', 'integer', 'exists:outlets,id'],
             'upsale_id' => ['nullable', 'integer', 'exists:products,id'],
             'down_sale_id' => ['nullable', 'integer', 'exists:products,id'],
         ];
@@ -56,6 +57,9 @@ class UpdateProductRequest extends FormRequest
             'price.min' => 'Price must be at least 0.',
             'sku.unique' => 'This SKU is already in use.',
             'stock.min' => 'Stock cannot be negative.',
+            'product_type_id.required' => 'Product type is required.',
+            'product_type_id.exists' => 'Selected product type is invalid.',
+            'outlet_id.required' => 'Outlet is required.',
         ];
     }
 }

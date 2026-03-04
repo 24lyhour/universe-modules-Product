@@ -20,6 +20,7 @@ use Modules\Product\Http\Resources\ProductAttributeResource;
 use Modules\Product\Http\Resources\ProductResource;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAttribute;
+use Modules\Product\Models\ProductType;
 use Modules\Product\Exports\ProductsExport;
 use Modules\Product\Imports\ProductsImport;
 use Modules\Product\Services\ProductService;
@@ -46,7 +47,7 @@ class ProductController extends Controller
      */
     public function index(Request $request): Response
     {
-        $filters = $request->only(['status', 'search', 'category_id', 'outlet_id', 'product_type', 'is_featured', 'in_stock', 'low_stock']);
+        $filters = $request->only(['status', 'search', 'category_id', 'outlet_id', 'product_type', 'product_type_id', 'is_featured', 'in_stock', 'low_stock']);
 
         $products = $this->productService->paginate(
             perPage: $request->integer('per_page', 10),
@@ -77,11 +78,17 @@ class ProductController extends Controller
             ->where('status', true)
             ->orderBy('name')
             ->get();
+        $productTypes = ProductType::select('id', 'name', 'slug')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Create', [
             'outlets' => $outlets,
             'products' => $products,
             'categories' => $categories,
+            'productTypes' => $productTypes,
             'productSettings' => UpdateProductSettingsAction::getSettings(),
         ])->baseRoute('product.products.index');
     }
@@ -120,7 +127,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): Modal
     {
-        $product->load(['upsell', 'downsell']);
+        $product->load(['upsell', 'downsell', 'productType']);
 
         $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
         $products = Product::select('id', 'name', 'price', 'sku')
@@ -132,12 +139,18 @@ class ProductController extends Controller
             ->where('status', true)
             ->orderBy('name')
             ->get();
+        $productTypes = ProductType::select('id', 'name', 'slug')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::modal('product::dashboard/product/Edit', [
             'product' => (new ProductResource($product))->resolve(),
             'outlets' => $outlets,
             'products' => $products,
             'categories' => $categories,
+            'productTypes' => $productTypes,
         ])->baseRoute('product.products.index');
     }
 

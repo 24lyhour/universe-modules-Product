@@ -24,6 +24,7 @@ class StoreProductRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'sku' => ['nullable', 'string', 'max:100', 'unique:products,sku'],
             'product_type' => ['nullable', 'in:phone,computer,tablet,accessory,other'],
+            'product_type_id' => ['required', 'integer', 'exists:product_types,id'],
             'price' => ['required', 'numeric', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
@@ -35,7 +36,7 @@ class StoreProductRequest extends FormRequest
             'images' => ['nullable', 'array'],
             'images.*' => ['string', 'url'],
             'category_id' => ['nullable', 'integer', 'exists:menu_categories,id'],
-            'outlet_id' => ['nullable', 'integer', 'exists:outlets,id'],
+            'outlet_id' => ['required', 'integer', 'exists:outlets,id'],
             'upsale_id' => ['nullable', 'integer', 'exists:products,id'],
             'down_sale_id' => ['nullable', 'integer', 'exists:products,id'],
         ];
@@ -53,6 +54,9 @@ class StoreProductRequest extends FormRequest
             'sku.unique' => 'This SKU is already in use.',
             'stock.required' => 'Stock quantity is required.',
             'stock.min' => 'Stock cannot be negative.',
+            'product_type_id.required' => 'Product type is required.',
+            'product_type_id.exists' => 'Selected product type is invalid.',
+            'outlet_id.required' => 'Outlet is required.',
         ];
     }
 }

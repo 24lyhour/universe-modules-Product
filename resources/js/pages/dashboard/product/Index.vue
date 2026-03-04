@@ -81,8 +81,9 @@ const pagination = computed(() => ({
 
 // Table columns
 const columns: TableColumn<Product>[] = [
-    { key: 'name', label: 'Product', width: '25%' },
+    { key: 'name', label: 'Product', width: '20%' },
     { key: 'sku', label: 'SKU' },
+    { key: 'productType', label: 'Type' },
     { key: 'category', label: 'Category' },
     { key: 'price', label: 'Price', align: 'right' },
     { key: 'stock', label: 'Stock', align: 'center' },
@@ -456,6 +457,14 @@ const tableData = computed(() => {
                     <code v-if="item.sku" class="rounded bg-muted px-2 py-1 text-xs font-mono">
                         {{ item.sku }}
                     </code>
+                    <span v-else class="text-muted-foreground">-</span>
+                </template>
+
+                <!-- Custom cell for productType -->
+                <template #cell-productType="{ item }">
+                    <Badge v-if="item.productType" variant="secondary">
+                        {{ item.productType.name }}
+                    </Badge>
                     <span v-else class="text-muted-foreground">-</span>
                 </template>
 

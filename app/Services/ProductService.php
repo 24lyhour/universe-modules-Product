@@ -42,9 +42,14 @@ class ProductService
             $query->where('outlet_id', $filters['outlet_id']);
         }
 
-        // Product type filter
+        // Product type filter (legacy enum)
         if (!empty($filters['product_type'])) {
             $query->where('product_type', $filters['product_type']);
+        }
+
+        // Product type ID filter (new FK relationship)
+        if (!empty($filters['product_type_id'])) {
+            $query->where('product_type_id', $filters['product_type_id']);
         }
 
         // Featured filter
@@ -70,7 +75,7 @@ class ProductService
             $query->where('price', '<=', $filters['max_price']);
         }
 
-        return $query->with('category')->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
+        return $query->with(['category', 'productType'])->withCount(['variants', 'attributes'])->latest()->paginate($perPage);
     }
 
     /**

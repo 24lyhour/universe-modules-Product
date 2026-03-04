@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAttributeController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAddOnController;
+use Modules\Product\Http\Controllers\Dashboard\V1\ProductTypeController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductUpsellController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductVariantController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductSettingsController;
@@ -70,6 +71,11 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
             ->name('product.products.export');
         Route::get('products/template', [ProductController::class, 'template'])
             ->name('product.products.template');
+
+        // Product Types CRUD
+        Route::resource('product-types', ProductTypeController::class)
+            ->names('product.product-types')
+            ->parameters(['product-types' => 'productType']);
 
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');

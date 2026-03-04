@@ -28,6 +28,7 @@ const form = useForm<ProductFormData>({
     description: props.product.description || '',
     sku: props.product.sku || '',
     product_type: props.product.product_type,
+    product_type_id: props.product.product_type_id,
     price: props.product.price,
     purchase_price: props.product.purchase_price,
     sale_price: props.product.sale_price,
@@ -44,14 +45,15 @@ const form = useForm<ProductFormData>({
 });
 
 // Use shared validation composable
-const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name']);
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price', 'product_type_id', 'outlet_id']);
 
 // Get form data for validation
 const getFormData = () => ({
     name: form.name,
     description: form.description || null,
     sku: form.sku || null,
-    product_type: form.product_type || null,
+    product_type: form.product_type,
+    product_type_id: form.product_type_id,
     price: form.price,
     purchase_price: form.purchase_price,
     sale_price: form.sale_price,
@@ -72,7 +74,12 @@ watch(() => [form.name, form.price, form.stock], () => validateForm(getFormData(
 
 // Check if form is valid for submit button state (custom for Product)
 const isFormInvalid = computed(() => {
-    return !form.name || form.name.trim() === '' || form.price < 0 || form.stock < 0;
+    const nameValid = form.name && form.name.trim() !== '';
+    const priceValid = form.price >= 0;
+    const stockValid = form.stock >= 0;
+    const productTypeValid = form.product_type_id !== null;
+    const outletValid = form.outlet_id !== null;
+    return !nameValid || !priceValid || !stockValid || !productTypeValid || !outletValid;
 });
 
 const handleSubmit = () => {
@@ -105,6 +112,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" :products="props.products" :categories="props.categories" />
+        <ProductForm v-model="form" mode="edit" :outlets="props.outlets" :products="props.products" :categories="props.categories" :product-types="props.productTypes" />
     </ModalForm>
 </template>
