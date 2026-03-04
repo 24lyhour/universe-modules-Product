@@ -23,8 +23,12 @@ class ProductTypeService
             });
         }
 
-        if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            // Handle string "true"/"false" from frontend
+            $isActive = filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActive !== null) {
+                $query->where('is_active', $isActive);
+            }
         }
 
         if (!empty($filters['outlet_id'])) {

@@ -72,6 +72,26 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         Route::get('products/template', [ProductController::class, 'template'])
             ->name('product.products.template');
 
+        // Product Types Bulk Delete (must be before resource to avoid conflict)
+        Route::get('product-types/bulk-delete', [ProductTypeController::class, 'confirmBulkDelete'])
+            ->name('product.product-types.bulk-delete.confirm');
+        Route::delete('product-types/bulk-delete', [ProductTypeController::class, 'bulkDelete'])
+            ->name('product.product-types.bulk-delete');
+
+        // Product Types Trash (must be before resource to avoid conflict)
+        Route::get('product-types/trash', [ProductTypeController::class, 'trash'])
+            ->name('product.product-types.trash');
+        Route::delete('product-types/trash/empty', [ProductTypeController::class, 'emptyTrash'])
+            ->name('product.product-types.trash.empty');
+        Route::put('product-types/trash/bulk-restore', [ProductTypeController::class, 'bulkRestore'])
+            ->name('product.product-types.trash.bulk-restore');
+        Route::delete('product-types/trash/bulk-force-delete', [ProductTypeController::class, 'bulkForceDelete'])
+            ->name('product.product-types.trash.bulk-force-delete');
+        Route::put('product-types/{uuid}/restore', [ProductTypeController::class, 'restore'])
+            ->name('product.product-types.restore');
+        Route::delete('product-types/{uuid}/force-delete', [ProductTypeController::class, 'forceDelete'])
+            ->name('product.product-types.force-delete');
+
         // Product Types CRUD
         Route::resource('product-types', ProductTypeController::class)
             ->names('product.product-types')

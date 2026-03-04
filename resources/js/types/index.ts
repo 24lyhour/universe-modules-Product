@@ -574,6 +574,7 @@ export interface ProductTypeIndexProps {
     productTypes: PaginatedResponse<ProductTypeItem>;
     filters: ProductTypeFilters;
     stats: ProductTypeStats;
+    outlets?: Outlet[];
 }
 
 export interface ProductTypeCreateProps {
@@ -583,4 +584,38 @@ export interface ProductTypeCreateProps {
 export interface ProductTypeEditProps {
     productType: ProductTypeItem;
     outlets: Outlet[];
+}
+
+export interface ProductTypeShowProps {
+    productType: ProductTypeItem;
+}
+
+export interface ProductTypeTrashProps {
+    trashItems: {
+        data: {
+            id: number;
+            uuid: string;
+            display_name: string;
+            type: string;
+            deleted_at: string;
+        }[];
+        meta: PaginationMeta;
+    };
+    config: {
+        entityLabel: string;
+        entityLabelPlural: string;
+    };
+    filters: {
+        search?: string;
+        per_page?: number;
+    };
+}
+
+export interface ProductTypeBulkDeleteProps {
+    productTypeItems: {
+        id: number;
+        uuid: string;
+        name: string;
+        products_count: number;
+    }[];
 }
