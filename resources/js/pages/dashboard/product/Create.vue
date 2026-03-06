@@ -44,7 +44,7 @@ const form = useForm<ProductFormData>({
     down_sale_id: null,
 });
 
-const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price', 'product_type_id', 'outlet_id']);
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'product_type_id', 'outlet_id']);
 
 /**
  * Generate SKU from product name using settings
@@ -100,24 +100,23 @@ const getFormData = () => ({
  * watch the value real time
  */
 watch(
-    () => [form.name, form.price, form.sale_price, form.stock],
+    () => [form.name, form.price, form.stock],
     () => {
-        if (form.name || form.price > 0 || (form.sale_price && form.sale_price > 0)) {
+        if (form.name || form.price >= 0) {
             validateForm(getFormData());
         }
     }
 );
 
 /**
- * Check the validation form required - name, price, sale_price, product_type_id, outlet_id are required
+ * Check the validation form required - name, price, product_type_id, outlet_id are required
  */
 const isFormInvalid = computed(() => {
     const nameValid = form.name && form.name.trim() !== '';
-    const priceValid = form.price > 0;
-    const salePriceValid = form.sale_price !== null && form.sale_price > 0;
+    const priceValid = form.price >= 0;
     const productTypeValid = form.product_type_id !== null;
     const outletValid = form.outlet_id !== null;
-    return !nameValid || !priceValid || !salePriceValid || !productTypeValid || !outletValid;
+    return !nameValid || !priceValid || !productTypeValid || !outletValid;
 });
 
 const handleSubmit = () => {

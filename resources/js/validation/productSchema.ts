@@ -17,15 +17,17 @@ export const productSchema = z.object({
     product_type_id: z.number({ required_error: 'Product type is required' }).int(),
     price: z
         .number({ required_error: 'Price is required' })
-        .min(0.01, 'Price must be greater than 0'),
+        .min(0, 'Price must be at least 0'),
     purchase_price: z
         .number()
         .min(0, 'Purchase price must be at least 0')
         .optional()
         .nullable(),
     sale_price: z
-        .number({ required_error: 'Sale price is required' })
-        .min(0.01, 'Sale price must be greater than 0'),
+        .number()
+        .min(0, 'Sale price must be at least 0')
+        .optional()
+        .nullable(),
     stock: z
         .number({ required_error: 'Stock is required' })
         .int('Stock must be a whole number')

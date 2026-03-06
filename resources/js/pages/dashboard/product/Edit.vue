@@ -45,7 +45,7 @@ const form = useForm<ProductFormData>({
 });
 
 // Use shared validation composable
-const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'sale_price', 'product_type_id', 'outlet_id']);
+const { validateForm, validateAndSubmit } = useFormValidation(productSchema, ['name', 'price', 'product_type_id', 'outlet_id']);
 
 // Get form data for validation
 const getFormData = () => ({

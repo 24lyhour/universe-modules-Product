@@ -166,6 +166,19 @@ class ProductController extends Controller
     }
 
     /**
+     * Show delete confirmation modal.
+     */
+    public function confirmDelete(Product $product): Modal
+    {
+        return Inertia::modal('product::dashboard/product/Delete', [
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+            ],
+        ])->baseRoute('product.products.index');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Product $product)

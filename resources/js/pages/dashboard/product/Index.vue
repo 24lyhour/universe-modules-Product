@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
     TableReusable,
-    ModalConfirm,
     StatsCard,
     ButtonGroup,
     type TableColumn,
@@ -65,11 +64,6 @@ const outletFilter = ref(props.filters.outlet_id?.toString() || '');
 
 // Selection state
 const selectedUuids = ref<(string | number)[]>([]);
-
-// Delete modal state
-const isDeleteModalOpen = ref(false);
-const isDeleting = ref(false);
-const selectedProduct = ref<Product | null>(null);
 
 // Pagination
 const pagination = computed(() => ({
@@ -144,22 +138,7 @@ const handleEdit = (item: Product) => {
 };
 
 const openDeleteModal = (product: Product) => {
-    selectedProduct.value = product;
-    isDeleteModalOpen.value = true;
-};
-
-const handleDelete = () => {
-    if (!selectedProduct.value) return;
-    isDeleting.value = true;
-    router.delete(`/dashboard/products/${selectedProduct.value.id}`, {
-        onSuccess: () => {
-            isDeleteModalOpen.value = false;
-            selectedProduct.value = null;
-        },
-        onFinish: () => {
-            isDeleting.value = false;
-        },
-    });
+    router.visit(`/dashboard/products/${product.id}/delete`);
 };
 
 const toggleFeatured = (product: Product) => {
@@ -577,14 +556,4 @@ const tableData = computed(() => {
             </TableReusable>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <ModalConfirm
-        v-model:open="isDeleteModalOpen"
-        title="Delete Product"
-        :description="`Are you sure you want to delete '${selectedProduct?.name}'? This action cannot be undone.`"
-        confirm-text="Delete"
-        variant="danger"
-        :loading="isDeleting"
-        @confirm="handleDelete"
-    />
 </template>

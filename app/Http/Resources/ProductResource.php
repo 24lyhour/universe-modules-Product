@@ -54,9 +54,16 @@ class ProductResource extends JsonResource
             'outlet' => $this->whenLoaded('outlet', function () {
                 return [
                     'id' => $this->outlet->id,
+                    'uuid' => $this->outlet->uuid,
                     'name' => $this->outlet->name,
+                    'address' => $this->outlet->address,
+                    'phone' => $this->outlet->phone,
+                    'logo' => $this->outlet->logo,
                 ];
             }),
+
+            // Convenience fields for mobile app
+            'image' => $this->images[0] ?? null, // First image for listing
             'upsale_id' => $this->upsale_id,
             'upsell' => $this->whenLoaded('upsell', function () {
                 return [

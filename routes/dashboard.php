@@ -100,6 +100,10 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');
 
+        // Product delete confirmation modal (must be after resource to use route model binding)
+        Route::get('products/{product}/delete', [ProductController::class, 'confirmDelete'])
+            ->name('product.products.delete');
+
         // Additional product actions
         Route::patch('products/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])
             ->name('product.products.toggle-featured');

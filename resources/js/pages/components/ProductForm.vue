@@ -289,7 +289,7 @@ const formatCurrency = (value: number) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="sale_price">Sale Price <span class="text-destructive">*</span></Label>
+                    <Label for="sale_price">Sale Price</Label>
                     <Input
                         id="sale_price"
                         :model-value="model.sale_price ?? undefined"
@@ -434,7 +434,8 @@ const formatCurrency = (value: number) => {
                 <div class="flex items-center space-x-2">
                     <Checkbox
                         id="is_featured"
-                        v-model="model.is_featured"
+                        :checked="model.is_featured"
+                        @update:checked="model.is_featured = $event === true"
                     />
                     <Label for="is_featured" class="cursor-pointer">
                         Featured Product
@@ -447,7 +448,8 @@ const formatCurrency = (value: number) => {
                 <div class="flex items-center space-x-2">
                     <Checkbox
                         id="pre_order"
-                        v-model="model.pre_order"
+                        :checked="model.pre_order"
+                        @update:checked="model.pre_order = $event === true"
                     />
                     <Label for="pre_order" class="cursor-pointer">
                         Allow Pre-orders
