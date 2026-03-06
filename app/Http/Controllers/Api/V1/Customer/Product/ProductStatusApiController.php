@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Product\Http\Controllers\Api\V1;
+namespace Modules\Product\Http\Controllers\Api\V1\Product;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -17,9 +17,6 @@ class ProductStatusApiController extends Controller
         protected UpdateProductStockAction $stockAction
     ) {}
 
-    /**
-     * Activate a product.
-     */
     public function activate(Product $product): JsonResponse
     {
         $product = $this->statusAction->activate($product);
@@ -30,9 +27,6 @@ class ProductStatusApiController extends Controller
         ]);
     }
 
-    /**
-     * Deactivate a product.
-     */
     public function deactivate(Product $product): JsonResponse
     {
         $product = $this->statusAction->deactivate($product);
@@ -43,9 +37,6 @@ class ProductStatusApiController extends Controller
         ]);
     }
 
-    /**
-     * Set product as draft.
-     */
     public function setDraft(Product $product): JsonResponse
     {
         $product = $this->statusAction->setDraft($product);
@@ -56,13 +47,9 @@ class ProductStatusApiController extends Controller
         ]);
     }
 
-    /**
-     * Toggle featured status.
-     */
     public function toggleFeatured(Product $product): JsonResponse
     {
         $product = $this->statusAction->toggleFeatured($product);
-
         $status = $product->is_featured ? 'featured' : 'unfeatured';
 
         return response()->json([
@@ -71,9 +58,6 @@ class ProductStatusApiController extends Controller
         ]);
     }
 
-    /**
-     * Update product stock.
-     */
     public function updateStock(Request $request, Product $product): JsonResponse
     {
         $request->validate([

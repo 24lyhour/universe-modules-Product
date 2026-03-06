@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Product\Http\Controllers\Api\V1\ProductApiController;
-use Modules\Product\Http\Controllers\Api\V1\ProductPublicController;
-use Modules\Product\Http\Controllers\Api\V1\ProductStatusApiController;
+use Modules\Product\Http\Controllers\Api\V1\Product\ProductApiController;
+use Modules\Product\Http\Controllers\Api\V1\Product\ProductPublicController;
+use Modules\Product\Http\Controllers\Api\V1\Product\ProductStatusApiController;
 
 /*
 |--------------------------------------------------------------------------

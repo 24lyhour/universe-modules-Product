@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Product\Http\Controllers\Api\V1;
+namespace Modules\Product\Http\Controllers\Api\V1\Product;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -20,20 +20,11 @@ class ProductApiController extends Controller
         protected ProductService $productService
     ) {}
 
-    /**
-     * Display a listing of products.
-     */
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'status',
-            'search',
-            'category_id',
-            'is_featured',
-            'in_stock',
-            'low_stock',
-            'min_price',
-            'max_price',
+            'status', 'search', 'category_id', 'is_featured',
+            'in_stock', 'low_stock', 'min_price', 'max_price',
         ]);
 
         $products = $this->productService->paginate(
@@ -46,9 +37,6 @@ class ProductApiController extends Controller
         );
     }
 
-    /**
-     * Store a newly created product.
-     */
     public function store(StoreProductRequest $request, CreateProductAction $action): JsonResponse
     {
         $product = $action->execute($request->validated());
@@ -59,21 +47,13 @@ class ProductApiController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified product.
-     */
     public function show(Product $product): JsonResponse
     {
         $product->load('category');
 
-        return response()->json([
-            'data' => new ProductResource($product),
-        ]);
+        return response()->json(['data' => new ProductResource($product)]);
     }
 
-    /**
-     * Update the specified product.
-     */
     public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action): JsonResponse
     {
         $product = $action->execute($product, $request->validated());
@@ -84,40 +64,15 @@ class ProductApiController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified product.
-     */
     public function destroy(Product $product, DeleteProductAction $action): JsonResponse
     {
         $action->execute($product);
 
-        return response()->json([
-            'message' => 'Product deleted successfully.',
-        ]);
+        return response()->json(['message' => 'Product deleted successfully.']);
     }
 
-    /**
-     * Get product statistics.
-     */
     public function stats(): JsonResponse
     {
-        return response()->json([
-            'data' => $this->productService->getStats(),
-        ]);
-    }
-
-    /**
-     * Search products.
-     */
-    public function search(Request $request): JsonResponse
-    {
-        $products = $this->productService->paginate(
-            perPage: $request->integer('per_page', 15),
-            filters: ['search' => $request->input('q')]
-        );
-
-        return response()->json(
-            ProductResource::collection($products)->response()->getData(true)
-        );
+        return response()->json(['data' => $this->productService->getStats()]);
     }
 }

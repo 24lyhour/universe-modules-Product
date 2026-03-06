@@ -37,9 +37,15 @@ const form = useForm({
     confirmed: false,
 });
 
-watch(confirmed, (val) => {
-    form.confirmed = val;
+watch(confirmed, () => {
+    form.confirmed = confirmed.value;
 });
+
+const canSubmit = computed(() => confirmed.value === true);
+
+const handleConfirmedChange = (value: boolean | 'indeterminate') => {
+    confirmed.value = value === true;
+};
 
 const handleSubmit = () => {
     form.delete(products.destroy.url(props.product.id), {
@@ -65,7 +71,7 @@ const handleCancel = () => {
         size="md"
         submit-text="Delete Product"
         :loading="form.processing"
-        :disabled="!confirmed"
+        :disabled="!canSubmit"
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
@@ -85,11 +91,10 @@ const handleCancel = () => {
 
             <!-- Confirmation Checkbox -->
             <div class="flex items-start space-x-3 rounded-lg border p-4">
-                <input
+                <Checkbox
                     id="confirmed"
-                    v-model="confirmed"
-                    type="checkbox"
-                    class="mt-1 h-4 w-4 rounded border-gray-300"
+                    :checked="confirmed"
+                    @update:checked="handleConfirmedChange"
                 />
                 <div class="space-y-1">
                     <Label for="confirmed" class="cursor-pointer font-medium">
