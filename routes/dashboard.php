@@ -25,6 +25,22 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         Route::delete('products/attributes/bulk-delete', [ProductAttributeController::class, 'bulkDelete'])
             ->name('dashboard.product.attributes.bulk-delete');
 
+        // Product Attributes Trash routes
+        Route::get('products/attributes/trash', [ProductAttributeController::class, 'trash'])
+            ->name('dashboard.product.attributes.trash');
+        Route::get('products/attributes/export', [ProductAttributeController::class, 'export'])
+            ->name('dashboard.product.attributes.export');
+        Route::delete('products/attributes/trash/empty', [ProductAttributeController::class, 'emptyTrash'])
+            ->name('dashboard.product.attributes.trash.empty');
+        Route::put('products/attributes/trash/bulk-restore', [ProductAttributeController::class, 'bulkRestore'])
+            ->name('dashboard.product.attributes.trash.bulk-restore');
+        Route::delete('products/attributes/trash/bulk-force-delete', [ProductAttributeController::class, 'bulkForceDelete'])
+            ->name('dashboard.product.attributes.trash.bulk-force-delete');
+        Route::put('products/attributes/{uuid}/restore', [ProductAttributeController::class, 'restore'])
+            ->name('dashboard.product.attributes.restore');
+        Route::delete('products/attributes/{uuid}/force-delete', [ProductAttributeController::class, 'forceDelete'])
+            ->name('dashboard.product.attributes.force-delete');
+
         // Product Attributes CRUD (must be before products resource to avoid conflict)
         Route::resource('products/attributes', ProductAttributeController::class)
             ->names('dashboard.product.attributes')
@@ -39,6 +55,26 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
             ->name('dashboard.product.addons.create-standalone');
         Route::post('products/addons', [ProductAddOnController::class, 'storeStandalone'])
             ->name('dashboard.product.addons.store-standalone');
+
+        // Product Add-ons Trash routes
+        Route::get('products/addons/trash', [ProductAddOnController::class, 'trash'])
+            ->name('dashboard.product.addons.trash');
+        Route::get('products/addons/export', [ProductAddOnController::class, 'export'])
+            ->name('dashboard.product.addons.export');
+        Route::delete('products/addons/bulk-delete', [ProductAddOnController::class, 'bulkDelete'])
+            ->name('dashboard.product.addons.bulk-delete');
+        Route::delete('products/addons/trash/empty', [ProductAddOnController::class, 'emptyTrash'])
+            ->name('dashboard.product.addons.trash.empty');
+        Route::put('products/addons/trash/bulk-restore', [ProductAddOnController::class, 'bulkRestore'])
+            ->name('dashboard.product.addons.trash.bulk-restore');
+        Route::delete('products/addons/trash/bulk-force-delete', [ProductAddOnController::class, 'bulkForceDelete'])
+            ->name('dashboard.product.addons.trash.bulk-force-delete');
+        Route::put('products/addons/{uuid}/restore', [ProductAddOnController::class, 'restore'])
+            ->name('dashboard.product.addons.restore');
+        Route::delete('products/addons/{uuid}/force-delete', [ProductAddOnController::class, 'forceDelete'])
+            ->name('dashboard.product.addons.force-delete');
+        Route::delete('products/addons/{addon}/delete', [ProductAddOnController::class, 'destroyGlobal'])
+            ->name('dashboard.product.addons.destroy-global');
 
         // Products Bulk Delete (must be before products resource to avoid conflict)
         Route::get('products/bulk-delete', [ProductController::class, 'confirmBulkDelete'])
@@ -92,10 +128,18 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         Route::delete('product-types/{uuid}/force-delete', [ProductTypeController::class, 'forceDelete'])
             ->name('product.product-types.force-delete');
 
+        // Product Types Export
+        Route::get('product-types/export', [ProductTypeController::class, 'export'])
+            ->name('product.product-types.export');
+
         // Product Types CRUD
         Route::resource('product-types', ProductTypeController::class)
             ->names('product.product-types')
             ->parameters(['product-types' => 'productType']);
+
+        // Product Types Toggle Status
+        Route::put('product-types/{productType}/toggle-status', [ProductTypeController::class, 'toggleStatus'])
+            ->name('product.product-types.toggle-status');
 
         // Products CRUD
         Route::resource('products', ProductController::class)->names('product.products');

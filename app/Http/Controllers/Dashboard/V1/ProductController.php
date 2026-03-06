@@ -55,12 +55,23 @@ class ProductController extends Controller
         );
 
         $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
+        $categories = Category::select('id', 'name')
+            ->where('status', true)
+            ->orderBy('name')
+            ->get();
+        $productTypes = ProductType::select('id', 'name', 'slug')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('product::dashboard/product/Index', [
             'products' => ProductResource::collection($products)->response()->getData(true),
             'filters' => $filters,
             'stats' => $this->productService->getStats(),
             'outlets' => $outlets,
+            'categories' => $categories,
+            'productTypes' => $productTypes,
         ]);
     }
 

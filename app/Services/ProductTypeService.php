@@ -3,6 +3,7 @@
 namespace Modules\Product\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Modules\Product\Models\ProductType;
 
@@ -62,7 +63,10 @@ class ProductTypeService
         $data['slug'] = $this->generateUniqueSlug($data['name']);
         $data['sort_order'] = $data['sort_order'] ?? ProductType::max('sort_order') + 1;
 
-        return ProductType::create($data);
+        $productType = ProductType::create($data);
+        $this->clearStatsCache();
+
+        return $productType;
     }
 
     /**
@@ -75,6 +79,7 @@ class ProductTypeService
         }
 
         $productType->update($data);
+        $this->clearStatsCache();
 
         return $productType->fresh();
     }
@@ -84,19 +89,44 @@ class ProductTypeService
      */
     public function delete(ProductType $productType): bool
     {
-        return $productType->delete();
+        $result = $productType->delete();
+        $this->clearStatsCache();
+
+        return $result;
     }
 
     /**
-     * Get statistics for product types.
+     * Get statistics for product types (cached for 5 minutes).
      */
     public function getStats(): array
     {
-        return [
-            'total' => ProductType::count(),
-            'active' => ProductType::where('is_active', true)->count(),
-            'inactive' => ProductType::where('is_active', false)->count(),
-        ];
+        return Cache::remember('product_type_stats', 300, function () {
+            return [
+                'total' => ProductType::count(),
+                'active' => ProductType::where('is_active', true)->count(),
+                'inactive' => ProductType::where('is_active', false)->count(),
+            ];
+        });
+    }
+
+    /**
+     * Clear product type stats cache.
+     */
+    public function clearStatsCache(): void
+    {
+        Cache::forget('product_type_stats');
+    }
+
+    /**
+     * Update product type status.
+     */
+    public function updateStatus(ProductType $productType, bool $isActive): ProductType
+    {
+        $productType->is_active = $isActive;
+        $productType->save();
+        $this->clearStatsCache();
+
+        return $productType;
     }
 
     /**

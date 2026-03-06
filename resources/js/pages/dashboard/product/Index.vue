@@ -19,6 +19,7 @@ import {
     Upload,
     Download,
     FileSpreadsheet,
+    X,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -61,6 +62,8 @@ const props = defineProps<ProductIndexProps>();
 const searchQuery = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || '');
 const outletFilter = ref(props.filters.outlet_id?.toString() || '');
+const categoryFilter = ref(props.filters.category_id?.toString() || '');
+const productTypeFilter = ref(props.filters.product_type_id?.toString() || '');
 
 // Selection state
 const selectedUuids = ref<(string | number)[]>([]);
@@ -176,6 +179,8 @@ const handlePageChange = (page: number) => {
         search: searchQuery.value,
         status: statusFilter.value,
         outlet_id: outletFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: productTypeFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -186,6 +191,8 @@ const handlePerPageChange = (perPage: number) => {
         search: searchQuery.value,
         status: statusFilter.value,
         outlet_id: outletFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: productTypeFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -195,6 +202,8 @@ const handleSearch = (search: string) => {
         search,
         status: statusFilter.value,
         outlet_id: outletFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: productTypeFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -205,6 +214,8 @@ const handleStatusFilter = (status: string | number | boolean | bigint | Record<
         search: searchQuery.value,
         status: statusStr === 'all' ? '' : statusStr,
         outlet_id: outletFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: productTypeFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -216,7 +227,55 @@ const handleOutletFilter = (outletId: string | number | boolean | bigint | Recor
         search: searchQuery.value,
         status: statusFilter.value,
         outlet_id: actualId || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: productTypeFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
+};
+
+const handleCategoryFilter = (categoryId: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
+    const categoryStr = String(categoryId || 'all');
+    const actualId = categoryStr === 'all' ? '' : categoryStr;
+    categoryFilter.value = actualId;
+    router.get('/dashboard/products', {
+        search: searchQuery.value,
+        status: statusFilter.value,
+        outlet_id: outletFilter.value || undefined,
+        category_id: actualId || undefined,
+        product_type_id: productTypeFilter.value || undefined,
+    }, { preserveState: true, preserveScroll: true });
+};
+
+const handleProductTypeFilter = (typeId: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
+    const typeStr = String(typeId || 'all');
+    const actualId = typeStr === 'all' ? '' : typeStr;
+    productTypeFilter.value = actualId;
+    router.get('/dashboard/products', {
+        search: searchQuery.value,
+        status: statusFilter.value,
+        outlet_id: outletFilter.value || undefined,
+        category_id: categoryFilter.value || undefined,
+        product_type_id: actualId || undefined,
+    }, { preserveState: true, preserveScroll: true });
+};
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+    return !!(
+        searchQuery.value ||
+        statusFilter.value ||
+        outletFilter.value ||
+        categoryFilter.value ||
+        productTypeFilter.value
+    );
+});
+
+const handleClearFilters = () => {
+    searchQuery.value = '';
+    statusFilter.value = '';
+    outletFilter.value = '';
+    categoryFilter.value = '';
+    productTypeFilter.value = '';
+    router.get('/dashboard/products', {}, { preserveState: true, preserveScroll: true });
 };
 
 const getStatusVariant = (status: string) => {
@@ -384,6 +443,40 @@ const tableData = computed(() => {
                             </SelectContent>
                         </Select>
 
+                        <!-- Category Filter -->
+                        <Select :model-value="categoryFilter || 'all'" @update:model-value="handleCategoryFilter">
+                            <SelectTrigger class="w-[180px]">
+                                <SelectValue placeholder="All Categories" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                <SelectItem
+                                    v-for="category in props.categories"
+                                    :key="category.id"
+                                    :value="category.id.toString()"
+                                >
+                                    {{ category.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <!-- Product Type Filter -->
+                        <Select :model-value="productTypeFilter || 'all'" @update:model-value="handleProductTypeFilter">
+                            <SelectTrigger class="w-[180px]">
+                                <SelectValue placeholder="All Types" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Types</SelectItem>
+                                <SelectItem
+                                    v-for="type in props.productTypes"
+                                    :key="type.id"
+                                    :value="type.id.toString()"
+                                >
+                                    {{ type.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+
                         <!-- Status Filter -->
                         <Select :model-value="statusFilter || 'all'" @update:model-value="handleStatusFilter">
                             <SelectTrigger class="w-[150px]">
@@ -397,6 +490,18 @@ const tableData = computed(() => {
                                 <SelectItem value="inactive">Inactive</SelectItem>
                             </SelectContent>
                         </Select>
+
+                        <!-- Clear Filters Button -->
+                        <Button
+                            v-if="hasActiveFilters"
+                            variant="ghost"
+                            size="sm"
+                            @click="handleClearFilters"
+                            class="text-muted-foreground hover:text-foreground"
+                        >
+                            <X class="mr-1 h-4 w-4" />
+                            Clear Filters
+                        </Button>
                     </div>
                 </template>
 

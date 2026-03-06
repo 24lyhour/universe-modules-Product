@@ -146,6 +146,7 @@ export interface ProductFilters {
     category_id?: number;
     outlet_id?: number;
     product_type?: string;
+    product_type_id?: number;
     is_featured?: boolean;
     in_stock?: boolean;
     low_stock?: boolean;
@@ -181,6 +182,8 @@ export interface ProductIndexProps {
     filters: ProductFilters;
     stats: ProductStats;
     outlets?: Outlet[];
+    categories?: ProductCategory[];
+    productTypes?: ProductTypeItem[];
 }
 
 export interface ProductShowProps {
@@ -225,6 +228,7 @@ export interface ProductAttribute {
     values_count?: number;
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 export interface ProductAttributeValue {
@@ -373,6 +377,7 @@ export interface ProductAddOn {
     };
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 export interface ProductAddOnFormData {
@@ -392,6 +397,7 @@ export interface ProductAddOnStats {
     required: number;
     optional: number;
     active: number;
+    trashed?: number;
 }
 
 export interface ProductAddOnIndexProps {
@@ -424,6 +430,7 @@ export interface ProductAddOnIndexAllProps {
     filters: {
         search?: string;
         per_page?: number;
+        status?: string;
     };
     stats: ProductAddOnStats;
 }
@@ -486,12 +493,13 @@ export interface ProductAttributeIndexProps {
     filters: {
         search?: string;
         type?: string;
-        is_active?: boolean;
+        is_active?: string | boolean;
     };
     stats: {
         total: number;
         active: number;
         inactive: number;
+        trashed?: number;
     };
 }
 

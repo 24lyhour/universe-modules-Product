@@ -5,11 +5,12 @@ namespace Modules\Product\Models;
 use App\Traits\BelongsToProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class ProductAddOn extends Model
 {
-    use BelongsToProduct;
+    use BelongsToProduct, SoftDeletes;
     /**
      * The table associated with the model.
      */

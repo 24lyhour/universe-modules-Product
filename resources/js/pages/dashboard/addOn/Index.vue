@@ -5,22 +5,34 @@ import {
     Plus,
     Pencil,
     Trash2,
-    ToggleLeft,
-    ToggleRight,
     Package,
     CircleDot,
     CircleDotDashed,
     ExternalLink,
     Settings,
+    Database,
+    Download,
+    X,
+    ToggleRight,
 } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     TableReusable,
     ModalConfirm,
     StatsCard,
+    ButtonGroup,
     type TableColumn,
     type TableAction,
 } from '@/components/shared';
@@ -35,8 +47,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Add-ons', href: '/dashboard/products/addons' },
 ];
 
-// Search
+// Search and filters
 const searchQuery = ref(props.filters.search || '');
+const statusFilter = ref(props.filters.status || 'all');
+
+// Selection
+const selectedUuids = ref<(string | number)[]>([]);
 
 // Delete modal state
 const isDeleteModalOpen = ref(false);
@@ -85,11 +101,6 @@ const tableActions: TableAction<ProductAddOnWithProduct>[] = [
         onClick: (item) => router.visit(`/dashboard/products/${item.product_id}/addons/${item.id}/edit`),
     },
     {
-        label: 'Toggle Status',
-        icon: ToggleLeft,
-        onClick: (item) => toggleStatus(item),
-    },
-    {
         label: 'Delete',
         icon: Trash2,
         onClick: (item) => openDeleteModal(item),
@@ -97,6 +108,11 @@ const tableActions: TableAction<ProductAddOnWithProduct>[] = [
         separator: true,
     },
 ];
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+    return !!(searchQuery.value || (statusFilter.value && statusFilter.value !== 'all'));
+});
 
 // Handlers
 const openDeleteModal = (addOn: ProductAddOnWithProduct) => {
@@ -108,11 +124,12 @@ const handleDelete = () => {
     if (!selectedAddOn.value) return;
     isDeleting.value = true;
     router.delete(
-        `/dashboard/products/${selectedAddOn.value.product_id}/addons/${selectedAddOn.value.id}`,
+        `/dashboard/products/addons/${selectedAddOn.value.id}/delete`,
         {
             onSuccess: () => {
                 isDeleteModalOpen.value = false;
                 selectedAddOn.value = null;
+                toast.success('Add-on moved to trash');
             },
             onFinish: () => {
                 isDeleting.value = false;
@@ -121,8 +138,34 @@ const handleDelete = () => {
     );
 };
 
-const toggleStatus = (addOn: ProductAddOnWithProduct) => {
-    router.patch(`/dashboard/products/${addOn.product_id}/addons/${addOn.id}/toggle-status`);
+const handleStatusToggle = (item: ProductAddOnWithProduct, newValue: boolean) => {
+    router.patch(`/dashboard/products/${item.product_id}/addons/${item.id}/toggle-status`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(`Status changed to ${newValue ? 'Active' : 'Inactive'}`);
+        },
+    });
+};
+
+const openBulkDeleteDialog = () => {
+    router.delete('/dashboard/products/addons/bulk-delete', {
+        data: { uuids: selectedUuids.value },
+        onSuccess: () => {
+            selectedUuids.value = [];
+            toast.success('Selected add-ons moved to trash');
+        },
+    });
+};
+
+const handleTrash = () => {
+    router.visit('/dashboard/products/addons/trash');
+};
+
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (searchQuery.value) params.append('search', searchQuery.value);
+    if (statusFilter.value && statusFilter.value !== 'all') params.append('status', statusFilter.value);
+    window.location.href = `/dashboard/products/addons/export?${params.toString()}`;
 };
 
 const handlePageChange = (page: number) => {
@@ -130,6 +173,7 @@ const handlePageChange = (page: number) => {
         page,
         per_page: pagination.value.per_page,
         search: searchQuery.value,
+        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -138,6 +182,7 @@ const handlePerPageChange = (perPage: number) => {
         page: 1,
         per_page: perPage,
         search: searchQuery.value,
+        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -145,7 +190,23 @@ const handleSearch = (search: string) => {
     searchQuery.value = search;
     router.get('/dashboard/products/addons', {
         search,
+        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
+};
+
+const handleStatusFilter = (value: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
+    const status = String(value || 'all');
+    statusFilter.value = status;
+    router.get('/dashboard/products/addons', {
+        search: searchQuery.value,
+        status: status !== 'all' ? status : undefined,
+    }, { preserveState: true, preserveScroll: true });
+};
+
+const handleClearFilters = () => {
+    searchQuery.value = '';
+    statusFilter.value = 'all';
+    router.get('/dashboard/products/addons', {}, { preserveState: true, preserveScroll: true });
 };
 
 const formatCurrency = (value: number) => {
@@ -181,16 +242,32 @@ const formatDate = (date: string) => {
                     <h1 class="text-2xl font-bold tracking-tight">Product Add-ons</h1>
                     <p class="text-muted-foreground">Manage all product add-ons across your catalog</p>
                 </div>
-                <Button as-child>
-                    <Link href="/dashboard/products/addons/create">
-                        <Plus class="mr-2 h-4 w-4" />
-                        Create Add-on
-                    </Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <ButtonGroup>
+                        <Button variant="default">
+                            <Database class="mr-2 h-4 w-4" />
+                            All
+                        </Button>
+                        <Button variant="outline" @click="handleTrash">
+                            <Trash2 class="mr-2 h-4 w-4" />
+                            Trash
+                        </Button>
+                    </ButtonGroup>
+                    <Button variant="outline" @click="handleExport">
+                        <Download class="mr-2 h-4 w-4" />
+                        Export
+                    </Button>
+                    <Button as-child>
+                        <Link href="/dashboard/products/addons/create">
+                            <Plus class="mr-2 h-4 w-4" />
+                            Create Add-on
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid gap-4 md:grid-cols-4">
+            <div class="grid gap-4 md:grid-cols-5">
                 <StatsCard title="Total" :value="stats.total" :icon="Package" />
                 <StatsCard
                     title="Required"
@@ -210,10 +287,16 @@ const formatDate = (date: string) => {
                     :icon="ToggleRight"
                     variant="success"
                 />
+                <StatsCard
+                    title="In Trash"
+                    :value="stats.trashed ?? 0"
+                    :icon="Trash2"
+                    variant="destructive"
+                />
             </div>
 
             <!-- Empty State -->
-            <div v-if="props.addOns.data.length === 0 && !filters.search" class="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <div v-if="props.addOns.data.length === 0 && !hasActiveFilters" class="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
                 <Package class="h-12 w-12 text-muted-foreground/50 mb-4" />
                 <h3 class="text-lg font-semibold">No add-ons yet</h3>
                 <p class="text-muted-foreground mt-1 mb-4 max-w-md">
@@ -230,16 +313,56 @@ const formatDate = (date: string) => {
             <!-- Table -->
             <TableReusable
                 v-else
+                v-model:selected="selectedUuids"
                 :data="props.addOns.data"
                 :columns="columns"
                 :actions="tableActions"
                 :pagination="pagination"
                 :searchable="true"
+                :selectable="true"
+                select-key="uuid"
                 search-placeholder="Search by add-on name..."
                 @page-change="handlePageChange"
                 @per-page-change="handlePerPageChange"
                 @search="handleSearch"
             >
+                <!-- Bulk Actions -->
+                <template #bulk-actions>
+                    <Button variant="destructive" size="sm" @click="openBulkDeleteDialog">
+                        <Trash2 class="mr-2 h-4 w-4" />
+                        Delete Selected
+                    </Button>
+                </template>
+
+                <!-- Toolbar slot for filters -->
+                <template #toolbar>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Status Filter -->
+                        <Select :model-value="statusFilter" @update:model-value="handleStatusFilter">
+                            <SelectTrigger class="w-[150px]">
+                                <SelectValue placeholder="All Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="true">Active</SelectItem>
+                                <SelectItem value="false">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <!-- Clear Filters Button -->
+                        <Button
+                            v-if="hasActiveFilters"
+                            variant="ghost"
+                            size="sm"
+                            @click="handleClearFilters"
+                            class="text-muted-foreground hover:text-foreground"
+                        >
+                            <X class="mr-1 h-4 w-4" />
+                            Clear Filters
+                        </Button>
+                    </div>
+                </template>
+
                 <!-- Custom cell for parent product -->
                 <template #cell-product="{ item }">
                     <div class="flex flex-col">
@@ -288,11 +411,17 @@ const formatDate = (date: string) => {
                     </Badge>
                 </template>
 
-                <!-- Custom cell for status -->
+                <!-- Custom cell for status with switch toggle -->
                 <template #cell-is_active="{ item }">
-                    <Badge :variant="item.is_active ? 'default' : 'secondary'">
-                        {{ item.is_active ? 'Active' : 'Inactive' }}
-                    </Badge>
+                    <div class="flex items-center gap-2" @click.stop>
+                        <Switch
+                            :model-value="item.is_active"
+                            @update:model-value="handleStatusToggle(item, $event)"
+                        />
+                        <span class="text-sm text-muted-foreground">
+                            {{ item.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
                 </template>
 
                 <!-- Custom cell for date -->
@@ -307,9 +436,9 @@ const formatDate = (date: string) => {
         <!-- Delete Confirmation Modal -->
         <ModalConfirm
             v-model:open="isDeleteModalOpen"
-            title="Remove Add-on"
-            :description="`Are you sure you want to remove '${selectedAddOn?.name}' from add-ons?`"
-            confirm-text="Remove"
+            title="Move to Trash"
+            :description="`Are you sure you want to move '${selectedAddOn?.name}' to trash?`"
+            confirm-text="Move to Trash"
             variant="danger"
             :loading="isDeleting"
             @confirm="handleDelete"

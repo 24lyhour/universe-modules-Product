@@ -11,12 +11,15 @@ import {
     XCircle,
     Database,
     AlertTriangle,
+    X,
+    Download,
 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { toast } from '@/composables/useToast';
 import {
     Select,
     SelectContent,
@@ -179,12 +182,36 @@ const openBulkDeleteDialog = () => {
 const handleRowClick = (item: ProductTypeItem) => {
     router.visit(`/dashboard/product-types/${item.id}`);
 };
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+    return !!(searchQuery.value || statusFilter.value !== 'all' || outletFilter.value !== 'all');
+});
+
+const handleClearFilters = () => {
+    searchQuery.value = '';
+    statusFilter.value = 'all';
+    outletFilter.value = 'all';
+    router.get('/dashboard/product-types', {}, { preserveState: true, preserveScroll: true });
+};
+
+const handleStatusToggle = (item: ProductTypeItem, newStatus: boolean) => {
+    router.put(`/dashboard/product-types/${item.id}/toggle-status`, {
+        is_active: newStatus,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(`Product type ${newStatus ? 'activated' : 'deactivated'} successfully.`);
+        },
+    });
+};
 </script>
 
 <template>
     <Head title="Product Types" />
 
-    <div class="flex flex-1 flex-col gap-4 p-4">
+    <div class="flex h-full flex-1 flex-col gap-6 p-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
@@ -202,6 +229,10 @@ const handleRowClick = (item: ProductTypeItem) => {
                         Trash
                     </Button>
                 </ButtonGroup>
+                <Button variant="outline" as="a" href="/dashboard/product-types/export">
+                    <Download class="mr-2 h-4 w-4" />
+                    Export
+                </Button>
                 <Button @click="handleCreate">
                     <Plus class="mr-2 h-4 w-4" />
                     Add Product Type
@@ -233,124 +264,134 @@ const handleRowClick = (item: ProductTypeItem) => {
             />
         </div>
 
-        <!-- Main Content -->
-        <div>
-            <CardHeader>
-                <CardTitle>Product Types List</CardTitle>
-                <CardDescription>Click on a row to view details</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <TableReusable
-                    v-model:selected="selectedUuids"
-                    v-model:search-query="searchQuery"
-                    :data="props.productTypes.data"
-                    :columns="columns"
-                    :actions="tableActions"
-                    :pagination="pagination"
-                    :selectable="true"
-                    select-key="uuid"
-                    search-placeholder="Search product types..."
-                    empty-message="No product types found."
-                    @page-change="handlePageChange"
-                    @per-page-change="handlePerPageChange"
-                    @search="handleSearch"
-                    @row-click="handleRowClick"
+        <!-- Table -->
+        <TableReusable
+            v-model:selected="selectedUuids"
+            v-model:search-query="searchQuery"
+            :data="props.productTypes.data"
+            :columns="columns"
+            :actions="tableActions"
+            :pagination="pagination"
+            :selectable="true"
+            select-key="uuid"
+            search-placeholder="Search product types..."
+            empty-message="No product types found."
+            @page-change="handlePageChange"
+            @per-page-change="handlePerPageChange"
+            @search="handleSearch"
+            @row-click="handleRowClick"
+        >
+            <!-- Bulk Actions -->
+            <template #bulk-actions>
+                <Button variant="destructive" size="sm" @click="openBulkDeleteDialog">
+                    <Trash2 class="mr-2 h-4 w-4" />
+                    Delete Selected
+                </Button>
+            </template>
+
+            <!-- Toolbar slot for filters -->
+            <template #toolbar>
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Status Filter -->
+                    <Select :model-value="statusFilter" @update:model-value="handleStatusFilter">
+                        <SelectTrigger class="w-[150px]">
+                            <SelectValue placeholder="All Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="true">Active</SelectItem>
+                            <SelectItem value="false">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Outlet Filter -->
+                    <Select v-if="props.outlets && props.outlets.length > 0" :model-value="outletFilter" @update:model-value="handleOutletFilter">
+                        <SelectTrigger class="w-[180px]">
+                            <SelectValue placeholder="All Outlets" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Outlets</SelectItem>
+                            <SelectItem
+                                v-for="outlet in props.outlets"
+                                :key="outlet.id"
+                                :value="outlet.id.toString()"
+                            >
+                                {{ outlet.name }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Clear Filters Button -->
+                    <Button
+                        v-if="hasActiveFilters"
+                        variant="ghost"
+                        size="sm"
+                        @click="handleClearFilters"
+                        class="text-muted-foreground hover:text-foreground"
+                    >
+                        <X class="mr-1 h-4 w-4" />
+                        Clear Filters
+                    </Button>
+                </div>
+            </template>
+
+            <!-- Custom cell slots -->
+            <template #cell-name="{ item }">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                        <PackageSearch class="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                        <div class="font-medium">{{ item.name }}</div>
+                        <div v-if="item.slug" class="text-xs text-muted-foreground">{{ item.slug }}</div>
+                    </div>
+                </div>
+            </template>
+
+            <template #cell-products_count="{ item }">
+                <Badge
+                    :variant="(item.products_count ?? 0) > 0 ? 'default' : 'outline'"
+                    class="cursor-pointer tabular-nums transition-colors hover:bg-primary/80"
+                    @click.stop="router.visit(`/dashboard/products?product_type_id=${item.id}`)"
                 >
-                    <!-- Bulk Actions -->
-                    <template #bulk-actions>
-                        <Button variant="destructive" size="sm" @click="openBulkDeleteDialog">
-                            <Trash2 class="mr-2 h-4 w-4" />
-                            Delete Selected
-                        </Button>
-                    </template>
+                    {{ item.products_count ?? 0 }}
+                </Badge>
+            </template>
 
-                    <!-- Toolbar slot for filters -->
-                    <template #toolbar>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <!-- Status Filter -->
-                            <Select :model-value="statusFilter" @update:model-value="handleStatusFilter">
-                                <SelectTrigger class="w-[150px]">
-                                    <SelectValue placeholder="All Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="true">Active</SelectItem>
-                                    <SelectItem value="false">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
+            <template #cell-description="{ item }">
+                <span class="line-clamp-2 text-sm text-muted-foreground">
+                    {{ item.description || '-' }}
+                </span>
+            </template>
 
-                            <!-- Outlet Filter -->
-                            <Select v-if="props.outlets && props.outlets.length > 0" :model-value="outletFilter" @update:model-value="handleOutletFilter">
-                                <SelectTrigger class="w-[180px]">
-                                    <SelectValue placeholder="All Outlets" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Outlets</SelectItem>
-                                    <SelectItem
-                                        v-for="outlet in props.outlets"
-                                        :key="outlet.id"
-                                        :value="outlet.id.toString()"
-                                    >
-                                        {{ outlet.name }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </template>
+            <template #cell-outlet="{ item }">
+                <Badge
+                    v-if="item.outlet"
+                    variant="secondary"
+                    class="cursor-pointer transition-colors hover:bg-secondary/80"
+                    @click.stop="router.visit(`/dashboard/products?outlet_id=${item.outlet.id}`)"
+                >
+                    {{ item.outlet.name }}
+                </Badge>
+                <span v-else class="text-muted-foreground">-</span>
+            </template>
 
-                    <!-- Custom cell slots -->
-                    <template #cell-name="{ item }">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                                <PackageSearch class="h-4 w-4 text-primary" />
-                            </div>
-                            <div>
-                                <div class="font-medium">{{ item.name }}</div>
-                                <div v-if="item.slug" class="text-xs text-muted-foreground">{{ item.slug }}</div>
-                            </div>
-                        </div>
-                    </template>
+            <template #cell-is_active="{ item }">
+                <div class="flex items-center gap-2" @click.stop>
+                    <Switch
+                        :model-value="item.is_active"
+                        @update:model-value="handleStatusToggle(item, $event)"
+                    />
+                    <span class="text-sm text-muted-foreground">
+                        {{ item.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
+            </template>
 
-                    <template #cell-products_count="{ item }">
-                        <Badge
-                            :variant="(item.products_count ?? 0) > 0 ? 'default' : 'outline'"
-                            class="cursor-pointer tabular-nums transition-colors hover:bg-primary/80"
-                            @click.stop="router.visit(`/dashboard/products?product_type_id=${item.id}`)"
-                        >
-                            {{ item.products_count ?? 0 }}
-                        </Badge>
-                    </template>
-
-                    <template #cell-description="{ item }">
-                        <span class="line-clamp-2 text-sm text-muted-foreground">
-                            {{ item.description || '-' }}
-                        </span>
-                    </template>
-
-                    <template #cell-outlet="{ item }">
-                        <Badge
-                            v-if="item.outlet"
-                            variant="secondary"
-                            class="cursor-pointer transition-colors hover:bg-secondary/80"
-                            @click.stop="router.visit(`/dashboard/products?outlet_id=${item.outlet.id}`)"
-                        >
-                            {{ item.outlet.name }}
-                        </Badge>
-                        <span v-else class="text-muted-foreground">-</span>
-                    </template>
-
-                    <template #cell-is_active="{ item }">
-                        <Badge :variant="item.is_active ? 'default' : 'secondary'">
-                            {{ item.is_active ? 'Active' : 'Inactive' }}
-                        </Badge>
-                    </template>
-
-                    <template #cell-sort_order="{ item }">
-                        <Badge variant="outline" class="tabular-nums">{{ item.sort_order }}</Badge>
-                    </template>
-                </TableReusable>
-            </CardContent>
-        </div>
+            <template #cell-sort_order="{ item }">
+                <Badge variant="outline" class="tabular-nums">{{ item.sort_order }}</Badge>
+            </template>
+        </TableReusable>
     </div>
 
     <!-- Delete Confirmation Modal -->

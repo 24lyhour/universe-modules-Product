@@ -7,13 +7,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\Outlet\Models\Outlet;
+use Modules\Product\Exports\ProductTypesExport;
 use Modules\Product\Http\Requests\Dashboard\V1\ProductType\StoreProductTypeRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\ProductType\UpdateProductTypeRequest;
 use Modules\Product\Http\Resources\ProductTypeResource;
 use Modules\Product\Models\ProductType;
 use Modules\Product\Services\ProductTypeService;
 use Momentum\Modal\Modal;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductTypeController extends Controller
 {
@@ -145,9 +148,35 @@ class ProductTypeController extends Controller
         ]);
 
         $deleted = ProductType::whereIn('uuid', $request->uuids)->delete();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->route('product.product-types.index')
             ->with('success', "{$deleted} product type(s) deleted successfully.");
+    }
+
+    /**
+     * Toggle product type status.
+     */
+    public function toggleStatus(Request $request, ProductType $productType): RedirectResponse
+    {
+        $validated = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $this->productTypeService->updateStatus($productType, $validated['is_active']);
+
+        return redirect()->back()->with('success', 'Status updated successfully.');
+    }
+
+    /**
+     * Export product types to Excel.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $filters = $request->only(['search', 'is_active', 'outlet_id']);
+        $filename = 'product_types_' . now()->format('Y-m-d_His') . '.xlsx';
+
+        return Excel::download(new ProductTypesExport($filters), $filename);
     }
 
     /**
@@ -202,6 +231,7 @@ class ProductTypeController extends Controller
     {
         $productType = ProductType::onlyTrashed()->where('uuid', $uuid)->firstOrFail();
         $productType->restore();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->back()->with('success', 'Product type restored successfully.');
     }
@@ -213,6 +243,7 @@ class ProductTypeController extends Controller
     {
         $productType = ProductType::onlyTrashed()->where('uuid', $uuid)->firstOrFail();
         $productType->forceDelete();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->back()->with('success', 'Product type permanently deleted.');
     }
@@ -223,6 +254,7 @@ class ProductTypeController extends Controller
     public function emptyTrash(): RedirectResponse
     {
         $deleted = ProductType::onlyTrashed()->forceDelete();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->back()->with('success', "{$deleted} product type(s) permanently deleted.");
     }
@@ -239,6 +271,7 @@ class ProductTypeController extends Controller
         }
 
         $restored = ProductType::onlyTrashed()->whereIn('uuid', $uuids)->restore();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->back()->with('success', "{$restored} product type(s) restored successfully.");
     }
@@ -255,6 +288,7 @@ class ProductTypeController extends Controller
         }
 
         $deleted = ProductType::onlyTrashed()->whereIn('uuid', $uuids)->forceDelete();
+        $this->productTypeService->clearStatsCache();
 
         return redirect()->back()->with('success', "{$deleted} product type(s) permanently deleted.");
     }

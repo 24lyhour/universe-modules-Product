@@ -4,6 +4,7 @@ namespace Modules\Product\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Product\Models\Product;
@@ -99,6 +100,8 @@ class ProductService
             $this->syncCategoryPivot($product, (int) $data['category_id']);
         }
 
+        $this->clearStatsCache();
+
         return $product;
     }
 
@@ -154,6 +157,8 @@ class ProductService
             $this->syncCategoryPivot($product, $newCategoryId, $oldCategoryId);
         }
 
+        $this->clearStatsCache();
+
         return $product->fresh();
     }
 
@@ -162,23 +167,36 @@ class ProductService
      */
     public function delete(Product $product): bool
     {
-        return $product->delete();
+        $result = $product->delete();
+        $this->clearStatsCache();
+
+        return $result;
     }
 
     /**
-     * Get product statistics.
+     * Get product statistics (cached for 5 minutes).
      */
     public function getStats(): array
     {
-        return [
-            'total' => Product::count(),
-            'active' => Product::where('status', 'active')->count(),
-            'inactive' => Product::where('status', 'inactive')->count(),
-            'draft' => Product::where('status', 'draft')->count(),
-            'out_of_stock' => Product::where('stock', '<=', 0)->count(),
-            'low_stock' => Product::lowStock()->count(),
-            'featured' => Product::where('is_featured', true)->count(),
-        ];
+        return Cache::remember('product_stats', 300, function () {
+            return [
+                'total' => Product::count(),
+                'active' => Product::where('status', 'active')->count(),
+                'inactive' => Product::where('status', 'inactive')->count(),
+                'draft' => Product::where('status', 'draft')->count(),
+                'out_of_stock' => Product::where('stock', '<=', 0)->count(),
+                'low_stock' => Product::lowStock()->count(),
+                'featured' => Product::where('is_featured', true)->count(),
+            ];
+        });
+    }
+
+    /**
+     * Clear product stats cache.
+     */
+    public function clearStatsCache(): void
+    {
+        Cache::forget('product_stats');
     }
 
     /**
@@ -205,6 +223,7 @@ class ProductService
         }
 
         $product->save();
+        $this->clearStatsCache();
 
         return $product;
     }
@@ -216,6 +235,7 @@ class ProductService
     {
         $product->is_featured = !$product->is_featured;
         $product->save();
+        $this->clearStatsCache();
 
         return $product;
     }
@@ -227,6 +247,7 @@ class ProductService
     {
         $product->status = $status;
         $product->save();
+        $this->clearStatsCache();
 
         return $product;
     }

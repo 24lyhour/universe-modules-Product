@@ -10,11 +10,16 @@ import {
     ToggleLeft,
     ToggleRight,
     Settings,
+    Database,
+    Download,
+    X,
 } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
     Select,
     SelectContent,
@@ -26,6 +31,7 @@ import {
     TableReusable,
     ModalConfirm,
     StatsCard,
+    ButtonGroup,
     type TableColumn,
     type TableAction,
 } from '@/components/shared';
@@ -43,6 +49,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 // Search and filters
 const searchQuery = ref(props.filters.search || '');
 const typeFilter = ref(props.filters.type || '');
+const statusFilter = ref(props.filters.is_active ?? 'all');
 
 // Selection state
 const selectedUuids = ref<(string | number)[]>([]);
@@ -59,6 +66,15 @@ const pagination = computed(() => ({
     per_page: props.attributes.meta.per_page,
     total: props.attributes.meta.total,
 }));
+
+// Check if any filters are active
+const hasActiveFilters = computed(() => {
+    return !!(
+        searchQuery.value ||
+        typeFilter.value ||
+        (statusFilter.value !== 'all' && statusFilter.value !== '')
+    );
+});
 
 // Table columns
 const columns: TableColumn<ProductAttribute>[] = [
@@ -81,11 +97,6 @@ const tableActions: TableAction<ProductAttribute>[] = [
         label: 'Edit',
         icon: Pencil,
         onClick: (item) => handleEdit(item),
-    },
-    {
-        label: 'Toggle Status',
-        icon: ToggleLeft,
-        onClick: (item) => toggleStatus(item),
     },
     {
         label: 'Delete',
@@ -117,6 +128,7 @@ const handleDelete = () => {
         onSuccess: () => {
             isDeleteModalOpen.value = false;
             selectedAttribute.value = null;
+            toast.success('Attribute moved to trash');
         },
         onFinish: () => {
             isDeleting.value = false;
@@ -124,8 +136,13 @@ const handleDelete = () => {
     });
 };
 
-const toggleStatus = (attribute: ProductAttribute) => {
-    router.patch(`/dashboard/products/attributes/${attribute.id}/toggle-status`);
+const handleStatusToggle = (item: ProductAttribute, newValue: boolean) => {
+    router.patch(`/dashboard/products/attributes/${item.id}/toggle-status`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success(`Status changed to ${newValue ? 'Active' : 'Inactive'}`);
+        },
+    });
 };
 
 const openBulkDeleteDialog = () => {
@@ -136,12 +153,25 @@ const openBulkDeleteDialog = () => {
     router.visit(`/dashboard/products/attributes/bulk-delete?${params.toString()}`);
 };
 
+const handleTrash = () => {
+    router.visit('/dashboard/products/attributes/trash');
+};
+
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (searchQuery.value) params.append('search', searchQuery.value);
+    if (typeFilter.value) params.append('type', typeFilter.value);
+    if (statusFilter.value && statusFilter.value !== 'all') params.append('is_active', String(statusFilter.value));
+    window.location.href = `/dashboard/products/attributes/export?${params.toString()}`;
+};
+
 const handlePageChange = (page: number) => {
     router.get('/dashboard/products/attributes', {
         page,
         per_page: pagination.value.per_page,
         search: searchQuery.value,
-        type: typeFilter.value,
+        type: typeFilter.value || undefined,
+        is_active: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -150,7 +180,8 @@ const handlePerPageChange = (perPage: number) => {
         page: 1,
         per_page: perPage,
         search: searchQuery.value,
-        type: typeFilter.value,
+        type: typeFilter.value || undefined,
+        is_active: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -158,7 +189,8 @@ const handleSearch = (search: string) => {
     searchQuery.value = search;
     router.get('/dashboard/products/attributes', {
         search,
-        type: typeFilter.value,
+        type: typeFilter.value || undefined,
+        is_active: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
 };
 
@@ -167,8 +199,26 @@ const handleTypeFilter = (type: string | number | boolean | bigint | Record<stri
     typeFilter.value = typeStr === 'all' ? '' : typeStr;
     router.get('/dashboard/products/attributes', {
         search: searchQuery.value,
-        type: typeStr === 'all' ? '' : typeStr,
+        type: typeStr === 'all' ? undefined : typeStr,
+        is_active: statusFilter.value !== 'all' ? statusFilter.value : undefined,
     }, { preserveState: true, preserveScroll: true });
+};
+
+const handleStatusFilter = (value: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
+    const status = String(value ?? 'all');
+    statusFilter.value = status;
+    router.get('/dashboard/products/attributes', {
+        search: searchQuery.value,
+        type: typeFilter.value || undefined,
+        is_active: status !== 'all' ? status : undefined,
+    }, { preserveState: true, preserveScroll: true });
+};
+
+const handleClearFilters = () => {
+    searchQuery.value = '';
+    typeFilter.value = '';
+    statusFilter.value = 'all';
+    router.get('/dashboard/products/attributes', {}, { preserveState: true, preserveScroll: true });
 };
 
 const getTypeVariant = (type: string) => {
@@ -205,6 +255,20 @@ const formatDate = (date: string) => {
                     <p class="text-muted-foreground">Manage product variation attributes (Size, Color, etc.)</p>
                 </div>
                 <div class="flex items-center gap-2">
+                    <ButtonGroup>
+                        <Button variant="default">
+                            <Database class="mr-2 h-4 w-4" />
+                            All
+                        </Button>
+                        <Button variant="outline" @click="handleTrash">
+                            <Trash2 class="mr-2 h-4 w-4" />
+                            Trash
+                        </Button>
+                    </ButtonGroup>
+                    <Button variant="outline" @click="handleExport">
+                        <Download class="mr-2 h-4 w-4" />
+                        Export
+                    </Button>
                     <Button variant="outline" as-child>
                         <Link href="/dashboard/products/settings">
                             <Settings class="mr-2 h-4 w-4" />
@@ -221,7 +285,7 @@ const formatDate = (date: string) => {
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid gap-4 md:grid-cols-3">
+            <div class="grid gap-4 md:grid-cols-4">
                 <StatsCard
                     title="Total Attributes"
                     :value="stats.total"
@@ -238,6 +302,12 @@ const formatDate = (date: string) => {
                     :value="stats.inactive"
                     :icon="ToggleLeft"
                     variant="secondary"
+                />
+                <StatsCard
+                    title="In Trash"
+                    :value="stats.trashed ?? 0"
+                    :icon="Trash2"
+                    variant="destructive"
                 />
             </div>
 
@@ -266,7 +336,8 @@ const formatDate = (date: string) => {
 
                 <!-- Toolbar slot for filters -->
                 <template #toolbar>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Type Filter -->
                         <Select :model-value="typeFilter || 'all'" @update:model-value="handleTypeFilter">
                             <SelectTrigger class="w-[150px]">
                                 <SelectValue placeholder="All Types" />
@@ -278,6 +349,30 @@ const formatDate = (date: string) => {
                                 <SelectItem value="button">Button</SelectItem>
                             </SelectContent>
                         </Select>
+
+                        <!-- Status Filter -->
+                        <Select :model-value="String(statusFilter)" @update:model-value="handleStatusFilter">
+                            <SelectTrigger class="w-[150px]">
+                                <SelectValue placeholder="All Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="true">Active</SelectItem>
+                                <SelectItem value="false">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <!-- Clear Filters Button -->
+                        <Button
+                            v-if="hasActiveFilters"
+                            variant="ghost"
+                            size="sm"
+                            @click="handleClearFilters"
+                            class="text-muted-foreground hover:text-foreground"
+                        >
+                            <X class="mr-1 h-4 w-4" />
+                            Clear Filters
+                        </Button>
                     </div>
                 </template>
 
@@ -310,11 +405,17 @@ const formatDate = (date: string) => {
                     <span class="text-muted-foreground">{{ item.sort_order }}</span>
                 </template>
 
-                <!-- Custom cell for status -->
+                <!-- Custom cell for status with switch toggle -->
                 <template #cell-is_active="{ item }">
-                    <Badge :variant="item.is_active ? 'default' : 'secondary'">
-                        {{ item.is_active ? 'Active' : 'Inactive' }}
-                    </Badge>
+                    <div class="flex items-center gap-2" @click.stop>
+                        <Switch
+                            :model-value="item.is_active"
+                            @update:model-value="handleStatusToggle(item, $event)"
+                        />
+                        <span class="text-sm text-muted-foreground">
+                            {{ item.is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
                 </template>
 
                 <!-- Custom cell for date -->
@@ -329,9 +430,9 @@ const formatDate = (date: string) => {
         <!-- Delete Confirmation Modal -->
         <ModalConfirm
             v-model:open="isDeleteModalOpen"
-            title="Delete Attribute"
-            :description="`Are you sure you want to delete '${selectedAttribute?.name}'? This will also delete all associated values.`"
-            confirm-text="Delete"
+            title="Move to Trash"
+            :description="`Are you sure you want to move '${selectedAttribute?.name}' to trash?`"
+            confirm-text="Move to Trash"
             variant="danger"
             :loading="isDeleting"
             @confirm="handleDelete"
