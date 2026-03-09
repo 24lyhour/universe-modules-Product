@@ -1,0 +1,247 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import TiptapEditor from '@/components/TiptapEditor.vue';
+import { ImageUpload } from '@/components/shared';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import type { InertiaForm } from '@inertiajs/vue3';
+import type { ProductSimple } from '../../types';
+
+interface AddOnStandaloneFormData {
+    product_id: number | null;
+    name: string;
+    description: string;
+    image_url: string;
+    price_adjustment: number;
+    max_quantity: number;
+    sort_order: number;
+    is_required: boolean;
+    is_active: boolean;
+}
+
+interface Props {
+    mode?: 'create' | 'edit';
+    parentProducts: ProductSimple[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    mode: 'create',
+});
+
+const model = defineModel<InertiaForm<AddOnStandaloneFormData>>({ required: true });
+
+// Computed for product select (convert number to string for Select component)
+const selectedProductId = computed({
+    get: () => model.value.product_id?.toString() ?? '',
+    set: (value: string | undefined) => {
+        model.value.product_id = value ? parseInt(value) : null;
+    },
+});
+
+// Computed for single image (ImageUpload expects string[])
+const imageUrlArray = computed({
+    get: () => model.value.image_url ? [model.value.image_url] : [],
+    set: (value: string[]) => {
+        model.value.image_url = value.length > 0 ? value[0] : '';
+    },
+});
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(value);
+};
+</script>
+
+<template>
+    <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+        <!-- Parent Product Selection -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Select Parent Product</h3>
+                <p class="text-sm text-muted-foreground">
+                    Choose the product to add the add-on to
+                </p>
+            </div>
+            <Separator />
+
+            <div class="space-y-2">
+                <Label for="product_id">Parent Product <span class="text-destructive">*</span></Label>
+                <Select v-model="selectedProductId">
+                    <SelectTrigger id="product_id" :class="{ 'border-destructive': model.errors.product_id }">
+                        <SelectValue placeholder="Select a parent product" />
+                    </SelectTrigger>
+                    <SelectContent class="z-9999 max-h-60 overflow-y-auto">
+                        <SelectItem
+                            v-for="prod in parentProducts"
+                            :key="prod.id"
+                            :value="prod.id.toString()"
+                        >
+                            {{ prod.name }} ({{ formatCurrency(prod.price) }})
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <p v-if="model.errors.product_id" class="text-sm text-destructive">
+                    {{ model.errors.product_id }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Details Section -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Add-on Details</h3>
+                <p class="text-sm text-muted-foreground">
+                    Name, description, and image for this add-on
+                </p>
+            </div>
+            <Separator />
+
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <Label for="name">Name <span class="text-destructive">*</span></Label>
+                    <Input
+                        id="name"
+                        v-model="model.name"
+                        placeholder="e.g. Extra Sauce, Gift Wrapping"
+                        :class="{ 'border-destructive': model.errors.name }"
+                        required
+                    />
+                    <p v-if="model.errors.name" class="text-sm text-destructive">
+                        {{ model.errors.name }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="description">Description</Label>
+                    <TiptapEditor
+                        v-model="model.description"
+                        placeholder="Custom description for this add-on (optional)..."
+                        min-height="120px"
+                        max-height="250px"
+                    />
+                    <p v-if="model.errors.description" class="text-sm text-destructive">
+                        {{ model.errors.description }}
+                    </p>
+                </div>
+
+                <ImageUpload
+                    v-model="imageUrlArray"
+                    label="Image"
+                    :multiple="false"
+                    :max-files="1"
+                    accept="image/*"
+                    :error="model.errors.image_url"
+                />
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Settings</h3>
+                <p class="text-sm text-muted-foreground">
+                    Configure add-on pricing and limits
+                </p>
+            </div>
+            <Separator />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <Label for="price_adjustment">Price Adjustment ($) <span class="text-destructive">*</span></Label>
+                    <Input
+                        id="price_adjustment"
+                        v-model.number="model.price_adjustment"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        :class="{ 'border-destructive': model.errors.price_adjustment }"
+                        required
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Additional charge (+) or discount (-)
+                    </p>
+                    <p v-if="model.errors.price_adjustment" class="text-sm text-destructive">
+                        {{ model.errors.price_adjustment }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="max_quantity">Max Quantity <span class="text-destructive">*</span></Label>
+                    <Input
+                        id="max_quantity"
+                        v-model.number="model.max_quantity"
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        :class="{ 'border-destructive': model.errors.max_quantity }"
+                        required
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Maximum quantity customer can add
+                    </p>
+                    <p v-if="model.errors.max_quantity" class="text-sm text-destructive">
+                        {{ model.errors.max_quantity }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="sort_order">Sort Order</Label>
+                    <Input
+                        id="sort_order"
+                        v-model.number="model.sort_order"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Lower numbers appear first
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggles Section -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">Options</h3>
+                <p class="text-sm text-muted-foreground">
+                    Configure add-on behavior
+                </p>
+            </div>
+            <Separator />
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between rounded-lg border p-4">
+                    <div class="space-y-0.5">
+                        <Label for="is_required">Required</Label>
+                        <p class="text-sm text-muted-foreground">
+                            Customer must select this add-on
+                        </p>
+                    </div>
+                    <Switch id="is_required" v-model:checked="model.is_required" />
+                </div>
+
+                <div class="flex items-center justify-between rounded-lg border p-4">
+                    <div class="space-y-0.5">
+                        <Label for="is_active">Active</Label>
+                        <p class="text-sm text-muted-foreground">
+                            Show this add-on to customers
+                        </p>
+                    </div>
+                    <Switch id="is_active" v-model:checked="model.is_active" />
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
