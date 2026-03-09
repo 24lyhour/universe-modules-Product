@@ -12,6 +12,8 @@ import {
     Settings,
     Database,
     Download,
+    Upload,
+    FileSpreadsheet,
     X,
     ToggleRight,
 } from 'lucide-vue-next';
@@ -161,11 +163,19 @@ const handleTrash = () => {
     router.visit('/dashboard/products/addons/trash');
 };
 
+const handleImport = () => {
+    router.visit('/dashboard/products/addons/import');
+};
+
 const handleExport = () => {
     const params = new URLSearchParams();
     if (searchQuery.value) params.append('search', searchQuery.value);
     if (statusFilter.value && statusFilter.value !== 'all') params.append('status', statusFilter.value);
     window.location.href = `/dashboard/products/addons/export?${params.toString()}`;
+};
+
+const handleTemplate = () => {
+    window.location.href = '/dashboard/products/addons/template';
 };
 
 const handlePageChange = (page: number) => {
@@ -253,10 +263,20 @@ const formatDate = (date: string) => {
                             Trash
                         </Button>
                     </ButtonGroup>
-                    <Button variant="outline" @click="handleExport">
-                        <Download class="mr-2 h-4 w-4" />
-                        Export
-                    </Button>
+                    <ButtonGroup>
+                        <Button variant="outline" @click="handleImport">
+                            <Upload class="mr-2 h-4 w-4" />
+                            Import
+                        </Button>
+                        <Button variant="outline" @click="handleExport">
+                            <Download class="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                        <Button variant="outline" @click="handleTemplate">
+                            <FileSpreadsheet class="mr-2 h-4 w-4" />
+                            Template
+                        </Button>
+                    </ButtonGroup>
                     <Button as-child>
                         <Link href="/dashboard/products/addons/create">
                             <Plus class="mr-2 h-4 w-4" />

@@ -56,11 +56,21 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
         Route::post('products/addons', [ProductAddOnController::class, 'storeStandalone'])
             ->name('dashboard.product.addons.store-standalone');
 
+        // Product Add-ons Import/Export/Template routes
+        Route::get('products/addons/import', [ProductAddOnController::class, 'import'])
+            ->name('dashboard.product.addons.import');
+        Route::post('products/addons/import/preview', [ProductAddOnController::class, 'previewImport'])
+            ->name('dashboard.product.addons.import.preview');
+        Route::post('products/addons/import', [ProductAddOnController::class, 'processImport'])
+            ->name('dashboard.product.addons.import.process');
+        Route::get('products/addons/template', [ProductAddOnController::class, 'template'])
+            ->name('dashboard.product.addons.template');
+        Route::get('products/addons/export', [ProductAddOnController::class, 'export'])
+            ->name('dashboard.product.addons.export');
+
         // Product Add-ons Trash routes
         Route::get('products/addons/trash', [ProductAddOnController::class, 'trash'])
             ->name('dashboard.product.addons.trash');
-        Route::get('products/addons/export', [ProductAddOnController::class, 'export'])
-            ->name('dashboard.product.addons.export');
         Route::delete('products/addons/bulk-delete', [ProductAddOnController::class, 'bulkDelete'])
             ->name('dashboard.product.addons.bulk-delete');
         Route::delete('products/addons/trash/empty', [ProductAddOnController::class, 'emptyTrash'])

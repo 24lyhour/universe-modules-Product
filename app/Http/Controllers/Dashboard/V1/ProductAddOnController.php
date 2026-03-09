@@ -16,7 +16,13 @@ use Modules\Product\Http\Requests\Dashboard\V1\AddOn\ReorderProductAddOnsRequest
 use Modules\Product\Http\Requests\Dashboard\V1\AddOn\StoreProductAddOnRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\AddOn\UpdateProductAddOnRequest;
 use Modules\Product\Exports\ProductAddOnsExport;
+use Modules\Product\Imports\ProductAddOnsImport;
 use Modules\Product\Http\Resources\ProductAddOnResource;
+use Illuminate\Http\JsonResponse;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductAddOn;
 use Modules\Product\Services\ProductAddOnService;
@@ -82,6 +88,168 @@ class ProductAddOnController extends Controller
             new ProductAddOnsExport($search ?: null, $status ?: null),
             'product-add-ons-' . now()->format('Y-m-d') . '.xlsx'
         );
+    }
+
+    protected array $duplicateOptions = [
+        ['value' => 'skip', 'label' => 'Skip duplicates', 'description' => 'Skip rows with existing add-on name for product'],
+        ['value' => 'update', 'label' => 'Update existing', 'description' => 'Update existing add-ons with new data'],
+        ['value' => 'fail', 'label' => 'Fail on duplicate', 'description' => 'Stop import if duplicates found'],
+    ];
+
+    /**
+     * Show import page.
+     */
+    public function import(): Response
+    {
+        return Inertia::render('product::dashboard/addOn/Import', [
+            'duplicateOptions' => $this->duplicateOptions,
+        ]);
+    }
+
+    /**
+     * Preview import file.
+     */
+    public function previewImport(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $duplicateHandling = $request->input('duplicate_handling', 'skip');
+
+            $import = new ProductAddOnsImport($duplicateHandling, true);
+            Excel::import($import, $file);
+
+            $previewData = $import->getPreviewData();
+            $results = $import->getResults();
+
+            return response()->json([
+                'success' => true,
+                'preview' => $previewData,
+                'stats' => $results['preview_stats'],
+                'total_rows' => count($previewData),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Preview failed: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Process import file.
+     */
+    public function processImport(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $duplicateHandling = $request->input('duplicate_handling', 'skip');
+
+            $import = new ProductAddOnsImport($duplicateHandling, false);
+            Excel::import($import, $file);
+
+            $results = $import->getResults();
+
+            $messages = [];
+            if ($results['imported'] > 0) $messages[] = "{$results['imported']} imported";
+            if ($results['updated'] > 0) $messages[] = "{$results['updated']} updated";
+            if ($results['skipped'] > 0) $messages[] = "{$results['skipped']} skipped";
+            if ($results['failed'] > 0) $messages[] = "{$results['failed']} failed";
+
+            $message = 'Import completed: ' . implode(', ', $messages);
+
+            $this->service->clearStatsCache();
+
+            if ($results['failed'] > 0) {
+                session()->flash('import_failed_rows', $results['failed_rows']);
+                return redirect()->route('dashboard.product.addons.all')->with('warning', $message);
+            }
+
+            return redirect()->route('dashboard.product.addons.all')->with('success', $message);
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard.product.addons.import')->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download import template.
+     */
+    public function template(): BinaryFileResponse
+    {
+        $headers = ['Name', 'Product SKU', 'Description', 'Price Adjustment', 'Max Quantity', 'Sort Order', 'Is Required', 'Is Active', 'Add-on Product SKU'];
+        $sampleData = ['Extra Cheese', 'PIZZA-001', 'Add extra cheese topping', '2.50', '5', '1', 'false', 'true', ''];
+        $instructions = [
+            'Name, Product SKU, and Price Adjustment are required fields',
+            'Product SKU must match an existing product in the system',
+            'Name + Product SKU combination is used for duplicate detection',
+            'Is Required: true/false, yes/no, 1/0 (defaults to false)',
+            'Is Active: true/false, yes/no, 1/0 (defaults to true)',
+            'Max Quantity: integer value (defaults to 10)',
+            'Add-on Product SKU: optional, links to another product as the add-on item',
+        ];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Add-ons Import Template');
+
+        // Add headers
+        foreach ($headers as $index => $header) {
+            $column = Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($column . '1', $header);
+        }
+
+        // Style header row
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+        ]);
+
+        // Auto-size columns
+        foreach (range('A', $lastColumn) as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // Add sample data
+        foreach ($sampleData as $index => $value) {
+            $column = Coordinate::stringFromColumnIndex($index + 1);
+            $sheet->setCellValue($column . '2', $value);
+        }
+        $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setItalic(true);
+
+        // Add instructions sheet
+        $instructionsSheet = $spreadsheet->createSheet();
+        $instructionsSheet->setTitle('Instructions');
+        $instructionsSheet->setCellValue('A1', 'Import Instructions');
+        $instructionsSheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+        foreach ($instructions as $i => $instruction) {
+            $instructionsSheet->setCellValue('A' . ($i + 3), ($i + 1) . '. ' . $instruction);
+        }
+        $instructionsSheet->getColumnDimension('A')->setWidth(80);
+
+        // Set active sheet back to data
+        $spreadsheet->setActiveSheetIndex(0);
+
+        // Create temp file and download
+        $filename = 'product-add-ons-template.xlsx';
+        $tempPath = storage_path('app/temp/' . $filename);
+
+        if (!is_dir(dirname($tempPath))) {
+            mkdir(dirname($tempPath), 0755, true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempPath);
+
+        return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
     }
 
     /**
