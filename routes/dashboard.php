@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Product\Http\Controllers\Dashboard\V1\BrandController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAttributeController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductController;
 use Modules\Product\Http\Controllers\Dashboard\V1\ProductAddOnController;
@@ -117,6 +118,43 @@ Route::middleware(['auth', 'verified', DashboardMiddleware::class, 'auto.permiss
             ->name('product.products.export');
         Route::get('products/template', [ProductController::class, 'template'])
             ->name('product.products.template');
+
+        // ==================== BRAND ROUTES ====================
+
+        // Brands Bulk Delete (must be before resource to avoid conflict)
+        Route::get('brands/bulk-delete', [BrandController::class, 'confirmBulkDelete'])
+            ->name('product.brands.bulk-delete.confirm');
+        Route::delete('brands/bulk-delete', [BrandController::class, 'bulkDelete'])
+            ->name('product.brands.bulk-delete');
+
+        // Brands Trash (must be before resource to avoid conflict)
+        Route::get('brands/trash', [BrandController::class, 'trash'])
+            ->name('product.brands.trash');
+        Route::delete('brands/trash/empty', [BrandController::class, 'emptyTrash'])
+            ->name('product.brands.trash.empty');
+        Route::put('brands/trash/bulk-restore', [BrandController::class, 'bulkRestore'])
+            ->name('product.brands.trash.bulk-restore');
+        Route::delete('brands/trash/bulk-force-delete', [BrandController::class, 'bulkForceDelete'])
+            ->name('product.brands.trash.bulk-force-delete');
+        Route::put('brands/{uuid}/restore', [BrandController::class, 'restore'])
+            ->name('product.brands.restore');
+        Route::delete('brands/{uuid}/force-delete', [BrandController::class, 'forceDelete'])
+            ->name('product.brands.force-delete');
+
+        // Brands Export
+        Route::get('brands/export', [BrandController::class, 'export'])
+            ->name('product.brands.export');
+
+        // Brands CRUD
+        Route::resource('brands', BrandController::class)
+            ->names('product.brands')
+            ->parameters(['brands' => 'brand']);
+
+        // Brands Toggle Status
+        Route::put('brands/{brand}/toggle-status', [BrandController::class, 'toggleStatus'])
+            ->name('product.brands.toggle-status');
+
+        // ==================== PRODUCT TYPE ROUTES ====================
 
         // Product Types Bulk Delete (must be before resource to avoid conflict)
         Route::get('product-types/bulk-delete', [ProductTypeController::class, 'confirmBulkDelete'])

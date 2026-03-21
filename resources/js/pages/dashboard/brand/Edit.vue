@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ModalForm } from '@/components/shared';
-import ProductTypeForm from './components/ProductTypeForm.vue';
+import BrandForm from './components/BrandForm.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useModal } from 'momentum-modal';
 import { computed } from 'vue';
-import type { ProductTypeFormData, ProductTypeEditProps } from '@product/types';
+import type { BrandFormData, BrandEditProps } from '@product/types';
 
-const props = defineProps<ProductTypeEditProps>();
+const props = defineProps<BrandEditProps>();
 
 const { show, close, redirect } = useModal();
 
@@ -20,23 +20,24 @@ const isOpen = computed({
     },
 });
 
-const form = useForm<ProductTypeFormData>({
-    name: props.productType.name,
-    description: props.productType.description || '',
-    outlet_id: props.productType.outlet_id,
-    sort_order: props.productType.sort_order,
-    is_active: Boolean(props.productType.is_active),
+const form = useForm<BrandFormData>({
+    name: props.brand.name,
+    description: props.brand.description || '',
+    logo: props.brand.logo || '',
+    website: props.brand.website || '',
+    outlet_id: props.brand.outlet_id,
+    sort_order: props.brand.sort_order,
+    is_active: Boolean(props.brand.is_active),
 });
 
 // Check if form is valid
 const isFormInvalid = computed(() => {
     const nameValid = form.name && form.name.trim() !== '';
-    const outletValid = form.outlet_id !== null;
-    return !nameValid || !outletValid;
+    return !nameValid;
 });
 
 const handleSubmit = () => {
-    form.put(`/dashboard/product-types/${props.productType.id}`, {
+    form.put(`/dashboard/brands/${props.brand.id}`, {
         onSuccess: () => {
             close();
             redirect();
@@ -53,8 +54,8 @@ const handleCancel = () => {
 <template>
     <ModalForm
         v-model:open="isOpen"
-        :title="`Edit ${productType.name}`"
-        description="Update product type information"
+        :title="`Edit ${brand.name}`"
+        description="Update brand information"
         mode="edit"
         size="lg"
         submit-text="Save Changes"
@@ -63,6 +64,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductTypeForm v-model="form" mode="edit" :outlets="props.outlets" />
+        <BrandForm v-model="form" mode="edit" :outlets="props.outlets" />
     </ModalForm>
 </template>

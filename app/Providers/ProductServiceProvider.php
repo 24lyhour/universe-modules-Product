@@ -63,6 +63,18 @@ class ProductServiceProvider extends ServiceProvider
                 'PackageSearch'
             );
 
+            // Brands submenu
+            MenuService::addSubmenuItem(
+                'primary',
+                'product',
+                __('Brands'),
+                '/dashboard/brands',
+                17,
+                'brands.view_any',
+                'product.brands.index',
+                'Tag'
+            );
+
             // Product submenu
             MenuService::addSubmenuItem(
                 'primary',

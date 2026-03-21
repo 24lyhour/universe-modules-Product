@@ -627,3 +627,97 @@ export interface ProductTypeBulkDeleteProps {
         products_count: number;
     }[];
 }
+
+// ==================== BRAND TYPES ====================
+
+export interface BrandItem {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logo: string | null;
+    website: string | null;
+    outlet_id: number | null;
+    outlet?: {
+        id: number;
+        name: string;
+    } | null;
+    sort_order: number;
+    is_active: boolean;
+    products_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface BrandFormData {
+    name: string;
+    description: string;
+    logo: string;
+    website: string;
+    outlet_id: number | null;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface BrandStats {
+    total: number;
+    active: number;
+    inactive: number;
+}
+
+export interface BrandFilters {
+    search?: string;
+    is_active?: boolean;
+    outlet_id?: number;
+}
+
+export interface BrandIndexProps {
+    brands: PaginatedResponse<BrandItem>;
+    filters: BrandFilters;
+    stats: BrandStats;
+    outlets?: Outlet[];
+}
+
+export interface BrandCreateProps {
+    outlets: Outlet[];
+}
+
+export interface BrandEditProps {
+    brand: BrandItem;
+    outlets: Outlet[];
+}
+
+export interface BrandShowProps {
+    brand: BrandItem;
+}
+
+export interface BrandTrashProps {
+    trashItems: {
+        data: {
+            id: number;
+            uuid: string;
+            display_name: string;
+            type: string;
+            deleted_at: string;
+        }[];
+        meta: PaginationMeta;
+    };
+    config: {
+        entityLabel: string;
+        entityLabelPlural: string;
+    };
+    filters: {
+        search?: string;
+        per_page?: number;
+    };
+}
+
+export interface BrandBulkDeleteProps {
+    brandItems: {
+        id: number;
+        uuid: string;
+        name: string;
+        products_count: number;
+    }[];
+}

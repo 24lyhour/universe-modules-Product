@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductTypeFormData, Outlet } from '@product/types';
+import type { BrandFormData, Outlet } from '@product/types';
 import TiptapEditor from '@/components/TiptapEditor.vue';
+import { ImageUpload } from '@/components/shared';
 import { useTranslation } from '@/composables/useTranslation';
 
 const { __ } = useTranslation();
@@ -28,13 +29,21 @@ const props = withDefaults(defineProps<Props>(), {
     outlets: () => [],
 });
 
-const model = defineModel<InertiaForm<ProductTypeFormData>>({ required: true });
+const model = defineModel<InertiaForm<BrandFormData>>({ required: true });
 
 // Convert outlet_id to string for Select component
 const outletIdString = computed({
-    get: () => model.value.outlet_id?.toString() ?? '',
+    get: () => model.value.outlet_id?.toString() ?? 'none',
     set: (val: string) => {
-        model.value.outlet_id = val ? Number(val) : null;
+        model.value.outlet_id = val && val !== 'none' ? Number(val) : null;
+    },
+});
+
+// Handle single logo upload
+const logoArray = computed({
+    get: () => model.value.logo ? [model.value.logo] : [],
+    set: (val: string[]) => {
+        model.value.logo = val.length > 0 ? val[0] : '';
     },
 });
 
@@ -54,7 +63,7 @@ const isActive = computed({
             <div>
                 <h3 class="text-sm font-medium">{{ __('Basic Information') }}</h3>
                 <p class="text-sm text-muted-foreground">
-                    {{ mode === 'create' ? __('Enter the product type details') : __('Update the product type details') }}
+                    {{ mode === 'create' ? __('Enter the brand details') : __('Update the brand details') }}
                 </p>
             </div>
             <Separator />
@@ -66,7 +75,7 @@ const isActive = computed({
                         id="name"
                         v-model="model.name"
                         type="text"
-                        :placeholder="__('Enter product type name')"
+                        :placeholder="__('Enter brand name')"
                     />
                     <p v-if="model.errors.name" class="text-sm text-destructive">
                         {{ model.errors.name }}
@@ -74,12 +83,13 @@ const isActive = computed({
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="outlet_id">{{ __('Outlet') }} <span class="text-destructive">*</span></Label>
+                    <Label for="outlet_id">{{ __('Outlet') }}</Label>
                     <Select v-model="outletIdString">
                         <SelectTrigger class="w-full">
-                            <SelectValue :placeholder="__('Select outlet')" />
+                            <SelectValue :placeholder="__('Select outlet (optional)')" />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="none">{{ __('No outlet') }}</SelectItem>
                             <SelectItem
                                 v-for="outlet in props.outlets"
                                 :key="outlet.id"
@@ -109,17 +119,51 @@ const isActive = computed({
                 </div>
 
                 <div class="space-y-2 sm:col-span-2">
+                    <Label for="website">{{ __('Website') }}</Label>
+                    <Input
+                        id="website"
+                        v-model="model.website"
+                        type="url"
+                        placeholder="https://example.com"
+                    />
+                    <p v-if="model.errors.website" class="text-sm text-destructive">
+                        {{ model.errors.website }}
+                    </p>
+                </div>
+
+                <div class="space-y-2 sm:col-span-2">
                     <Label for="description">{{ __('Description') }}</Label>
                     <TiptapEditor
                         v-model="model.description"
                         :placeholder="__('Enter description (optional)')"
-                        max-height="400px"
-                        min-height="250px"
+                        max-height="300px"
+                        min-height="150px"
                     />
                     <p v-if="model.errors.description" class="text-sm text-destructive">
                         {{ model.errors.description }}
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Logo Section -->
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-medium">{{ __('Logo') }}</h3>
+                <p class="text-sm text-muted-foreground">{{ __('Upload your brand logo') }}</p>
+            </div>
+            <Separator />
+
+            <div class="space-y-2">
+                <ImageUpload
+                    v-model="logoArray"
+                    :max-files="1"
+                    accept="image/*"
+                    folder="brands"
+                />
+                <p v-if="model.errors.logo" class="text-sm text-destructive">
+                    {{ model.errors.logo }}
+                </p>
             </div>
         </div>
 
@@ -140,7 +184,7 @@ const isActive = computed({
                     </Label>
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    {{ __('Enable this product type for use') }}
+                    {{ __('Enable this brand for use') }}
                 </p>
             </div>
         </div>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ModalForm } from '@/components/shared';
-import ProductTypeForm from './components/ProductTypeForm.vue';
+import BrandForm from './components/BrandForm.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useModal } from 'momentum-modal';
 import { computed } from 'vue';
-import type { ProductTypeFormData, ProductTypeEditProps } from '@product/types';
+import type { BrandFormData, BrandCreateProps } from '@product/types';
 
-const props = defineProps<ProductTypeEditProps>();
+const props = defineProps<BrandCreateProps>();
 
 const { show, close, redirect } = useModal();
 
@@ -20,23 +20,24 @@ const isOpen = computed({
     },
 });
 
-const form = useForm<ProductTypeFormData>({
-    name: props.productType.name,
-    description: props.productType.description || '',
-    outlet_id: props.productType.outlet_id,
-    sort_order: props.productType.sort_order,
-    is_active: Boolean(props.productType.is_active),
+const form = useForm<BrandFormData>({
+    name: '',
+    description: '',
+    logo: '',
+    website: '',
+    outlet_id: null,
+    sort_order: 0,
+    is_active: true,
 });
 
 // Check if form is valid
 const isFormInvalid = computed(() => {
     const nameValid = form.name && form.name.trim() !== '';
-    const outletValid = form.outlet_id !== null;
-    return !nameValid || !outletValid;
+    return !nameValid;
 });
 
 const handleSubmit = () => {
-    form.put(`/dashboard/product-types/${props.productType.id}`, {
+    form.post('/dashboard/brands', {
         onSuccess: () => {
             close();
             redirect();
@@ -53,16 +54,16 @@ const handleCancel = () => {
 <template>
     <ModalForm
         v-model:open="isOpen"
-        :title="`Edit ${productType.name}`"
-        description="Update product type information"
-        mode="edit"
+        title="Create Brand"
+        description="Add a new brand"
+        mode="create"
         size="lg"
-        submit-text="Save Changes"
+        submit-text="Create"
         :loading="form.processing"
         :disabled="isFormInvalid"
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductTypeForm v-model="form" mode="edit" :outlets="props.outlets" />
+        <BrandForm v-model="form" mode="create" :outlets="props.outlets" />
     </ModalForm>
 </template>

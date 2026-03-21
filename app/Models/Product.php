@@ -49,6 +49,7 @@ class Product extends Model
         'pre_order',
         'images',
         'category_id',
+        'brand_id',
         'created_by',
         'updated_by',
     ];
@@ -125,6 +126,14 @@ class Product extends Model
     public function outlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class);
+    }
+
+    /**
+     * Relation to the brand.
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 
     /**
