@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Product\Console\Commands\ProductCommand;
 use Modules\Product\Console\Commands\ProductCreateCommand;
+use Modules\Product\Console\Commands\ProductListCommand;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -130,6 +131,7 @@ class ProductServiceProvider extends ServiceProvider
         $this->commands([
             ProductCommand::class,
             ProductCreateCommand::class,
+            ProductListCommand::class,
         ]);
     }
 

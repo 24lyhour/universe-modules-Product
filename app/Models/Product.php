@@ -431,4 +431,29 @@ class Product extends Model
 
         return round((($this->price - $this->sale_price) / $this->price) * 100, 1);
     }
+
+    /**
+     * Relation to cart items.
+     */
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    /**
+     * Relation to order items.
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * relation to the review
+     */
+    public function Review() : HasMany
+    {
+    
+        return $this->HasMany(Review::class);
+    }
 }
