@@ -14,6 +14,9 @@ use Modules\Product\Database\Factories\ProductFactory;
 use Modules\Menu\Models\Category;
 use Modules\Product\Models\ProductType;
 use Modules\Outlet\Models\Outlet;
+use Modules\Order\Models\CartItem;
+use Modules\Order\Models\OrderItem;
+use Modules\Order\Models\ProductReview;
 use App\Models\User;
 
 class Product extends Model
@@ -449,11 +452,40 @@ class Product extends Model
     }
 
     /**
-     * relation to the review
+     * Relation to product reviews.
      */
-    public function Review() : HasMany
+    public function reviews(): HasMany
     {
-    
-        return $this->HasMany(Review::class);
+        return $this->hasMany(ProductReview::class);
+    }
+
+    /**
+     * Get promotions for this product.
+     */
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(ProductPromotion::class);
+    }
+
+    /**
+     * Get active promotion for this product.
+     */
+    public function activePromotion()
+    {
+        return $this->promotions()->where('is_active', true)->first();
+    }
+
+    /**
+     * Get the promotional price if an active promotion exists.
+     */
+    public function getPromotionalPriceAttribute(): ?float
+    {
+        $promotion = $this->activePromotion();
+
+        if (!$promotion) {
+            return null;
+        }
+
+        return $promotion->calculateDiscountedPrice($this->price);
     }
 }
