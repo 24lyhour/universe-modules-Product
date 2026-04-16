@@ -126,7 +126,8 @@ class ProductPublicController extends Controller
 
     public function types(): JsonResponse
     {
-        $types = ProductType::where('status', 'active')
+        $types = ProductType::where('is_active', true)
+            ->orderBy('sort_order')
             ->select('id', 'uuid', 'name', 'slug', 'description')
             ->get();
 
