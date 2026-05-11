@@ -14,7 +14,7 @@ class ProductTypeService
      */
     public function paginate(int $perPage = 10, array $filters = []): LengthAwarePaginator
     {
-        $query = ProductType::query()->with('outlet');
+        $query = ProductType::query();
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -30,10 +30,6 @@ class ProductTypeService
             if ($isActive !== null) {
                 $query->where('is_active', $isActive);
             }
-        }
-
-        if (!empty($filters['outlet_id'])) {
-            $query->where('outlet_id', $filters['outlet_id']);
         }
 
         return $query->withCount('products')->ordered()->paginate($perPage);
@@ -52,7 +48,7 @@ class ProductTypeService
      */
     public function find(int $id): ?ProductType
     {
-        return ProductType::with('outlet')->find($id);
+        return ProductType::find($id);
     }
 
     /**

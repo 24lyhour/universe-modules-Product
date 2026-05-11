@@ -22,7 +22,6 @@ class UpdateProductTypeRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'outlet_id' => ['sometimes', 'required', 'integer', 'exists:outlets,id'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
         ];
@@ -36,8 +35,6 @@ class UpdateProductTypeRequest extends FormRequest
         return [
             'name.required' => 'Product type name is required.',
             'name.max' => 'Product type name must be less than 255 characters.',
-            'outlet_id.required' => 'Outlet is required.',
-            'outlet_id.exists' => 'Selected outlet does not exist.',
         ];
     }
 }

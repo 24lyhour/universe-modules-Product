@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
-use Modules\Outlet\Models\Outlet;
 use Modules\Product\Exports\ProductTypesExport;
 use Modules\Product\Http\Requests\Dashboard\V1\ProductType\StoreProductTypeRequest;
 use Modules\Product\Http\Requests\Dashboard\V1\ProductType\UpdateProductTypeRequest;
@@ -31,17 +30,15 @@ class ProductTypeController extends Controller
      */
     public function index(Request $request): Response
     {
-        $filters = $request->only(['search', 'is_active', 'outlet_id']);
+        $filters = $request->only(['search', 'is_active']);
         $perPage = $request->integer('per_page', 10);
 
         $productTypes = $this->productTypeService->paginate($perPage, $filters);
-        $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('product::dashboard/productType/Index', [
             'productTypes' => ProductTypeResource::collection($productTypes)->response()->getData(true),
             'filters' => $filters,
             'stats' => $this->productTypeService->getStats(),
-            'outlets' => $outlets,
         ]);
     }
 
@@ -50,11 +47,7 @@ class ProductTypeController extends Controller
      */
     public function create(): Modal
     {
-        $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
-
-        return Inertia::modal('product::dashboard/productType/Create', [
-            'outlets' => $outlets,
-        ])->baseRoute('product.product-types.index');
+        return Inertia::modal('product::dashboard/productType/Create')->baseRoute('product.product-types.index');
     }
 
     /**
@@ -73,7 +66,7 @@ class ProductTypeController extends Controller
      */
     public function show(ProductType $productType): Response
     {
-        $productType->load('outlet')->loadCount('products');
+        $productType->loadCount('products');
 
         return Inertia::render('product::dashboard/productType/Show', [
             'productType' => (new ProductTypeResource($productType))->resolve(),
@@ -85,12 +78,8 @@ class ProductTypeController extends Controller
      */
     public function edit(ProductType $productType): Modal
     {
-        $productType->load('outlet');
-        $outlets = Outlet::select('id', 'name')->orderBy('name')->get();
-
         return Inertia::modal('product::dashboard/productType/Edit', [
             'productType' => (new ProductTypeResource($productType))->resolve(),
-            'outlets' => $outlets,
         ])->baseRoute('product.product-types.index');
     }
 
@@ -173,7 +162,7 @@ class ProductTypeController extends Controller
      */
     public function export(Request $request): BinaryFileResponse
     {
-        $filters = $request->only(['search', 'is_active', 'outlet_id']);
+        $filters = $request->only(['search', 'is_active']);
         $filename = 'product_types_' . now()->format('Y-m-d_His') . '.xlsx';
 
         return Excel::download(new ProductTypesExport($filters), $filename);
