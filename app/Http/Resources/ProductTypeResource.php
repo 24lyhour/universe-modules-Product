@@ -18,11 +18,6 @@ class ProductTypeResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'outlet_id' => $this->outlet_id,
-            'outlet' => $this->whenLoaded('outlet', fn () => [
-                'id' => $this->outlet->id,
-                'name' => $this->outlet->name,
-            ]),
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
             'products_count' => $this->whenCounted('products'),

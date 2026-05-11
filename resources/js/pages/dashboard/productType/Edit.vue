@@ -23,7 +23,6 @@ const isOpen = computed({
 const form = useForm<ProductTypeFormData>({
     name: props.productType.name,
     description: props.productType.description || '',
-    outlet_id: props.productType.outlet_id,
     sort_order: props.productType.sort_order,
     is_active: Boolean(props.productType.is_active),
 });
@@ -31,8 +30,7 @@ const form = useForm<ProductTypeFormData>({
 // Check if form is valid
 const isFormInvalid = computed(() => {
     const nameValid = form.name && form.name.trim() !== '';
-    const outletValid = form.outlet_id !== null;
-    return !nameValid || !outletValid;
+    return !nameValid;
 });
 
 const handleSubmit = () => {
@@ -63,6 +61,6 @@ const handleCancel = () => {
         @submit="handleSubmit"
         @cancel="handleCancel"
     >
-        <ProductTypeForm v-model="form" mode="edit" :outlets="props.outlets" />
+        <ProductTypeForm v-model="form" mode="edit" />
     </ModalForm>
 </template>

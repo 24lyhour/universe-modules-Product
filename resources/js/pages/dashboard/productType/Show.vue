@@ -7,7 +7,6 @@ import {
     Trash2,
     PackageSearch,
     Package,
-    Building2,
     Calendar,
 } from 'lucide-vue-next';
 
@@ -173,28 +172,6 @@ const handleViewProducts = () => {
 
             <!-- Sidebar -->
             <div class="space-y-4">
-                <!-- Outlet Info -->
-                <Card>
-                    <CardHeader>
-                        <div class="flex items-center gap-2">
-                            <Building2 class="h-5 w-5" />
-                            <CardTitle class="text-lg">Outlet</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div v-if="productType.outlet" class="flex items-center gap-2">
-                            <Badge
-                                variant="secondary"
-                                class="cursor-pointer transition-colors hover:bg-secondary/80"
-                                @click="router.visit(`/dashboard/products?outlet_id=${productType.outlet.id}`)"
-                            >
-                                {{ productType.outlet.name }}
-                            </Badge>
-                        </div>
-                        <span v-else class="text-muted-foreground">No outlet assigned</span>
-                    </CardContent>
-                </Card>
-
                 <!-- Timestamps -->
                 <Card>
                     <CardHeader>

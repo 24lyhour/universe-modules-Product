@@ -3,16 +3,9 @@ import { computed } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { InertiaForm } from '@inertiajs/vue3';
-import type { ProductTypeFormData, Outlet } from '@product/types';
+import type { ProductTypeFormData } from '@product/types';
 import TiptapEditor from '@/components/TiptapEditor.vue';
 import { useTranslation } from '@/composables/useTranslation';
 
@@ -20,23 +13,13 @@ const { __ } = useTranslation();
 
 interface Props {
     mode?: 'create' | 'edit';
-    outlets?: Outlet[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     mode: 'create',
-    outlets: () => [],
 });
 
 const model = defineModel<InertiaForm<ProductTypeFormData>>({ required: true });
-
-// Convert outlet_id to string for Select component
-const outletIdString = computed({
-    get: () => model.value.outlet_id?.toString() ?? '',
-    set: (val: string) => {
-        model.value.outlet_id = val ? Number(val) : null;
-    },
-});
 
 // Computed for Switch v-model (matching OutletForm pattern)
 const isActive = computed({
@@ -70,27 +53,6 @@ const isActive = computed({
                     />
                     <p v-if="model.errors.name" class="text-sm text-destructive">
                         {{ model.errors.name }}
-                    </p>
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="outlet_id">{{ __('Outlet') }} <span class="text-destructive">*</span></Label>
-                    <Select v-model="outletIdString">
-                        <SelectTrigger class="w-full">
-                            <SelectValue :placeholder="__('Select outlet')" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="outlet in props.outlets"
-                                :key="outlet.id"
-                                :value="outlet.id.toString()"
-                            >
-                                {{ outlet.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <p v-if="model.errors.outlet_id" class="text-sm text-destructive">
-                        {{ model.errors.outlet_id }}
                     </p>
                 </div>
 

@@ -20,7 +20,7 @@ class ProductTypesExport implements FromQuery, WithHeadings, WithMapping, WithSt
 
     public function query()
     {
-        $query = ProductType::query()->with('outlet');
+        $query = ProductType::query();
 
         if (!empty($this->filters['search'])) {
             $search = $this->filters['search'];
@@ -37,10 +37,6 @@ class ProductTypesExport implements FromQuery, WithHeadings, WithMapping, WithSt
             }
         }
 
-        if (!empty($this->filters['outlet_id'])) {
-            $query->where('outlet_id', $this->filters['outlet_id']);
-        }
-
         return $query->withCount('products')->orderBy('sort_order');
     }
 
@@ -51,7 +47,6 @@ class ProductTypesExport implements FromQuery, WithHeadings, WithMapping, WithSt
             'Name',
             'Slug',
             'Description',
-            'Outlet',
             'Products Count',
             'Status',
             'Sort Order',
@@ -66,7 +61,6 @@ class ProductTypesExport implements FromQuery, WithHeadings, WithMapping, WithSt
             $productType->name,
             $productType->slug,
             $productType->description,
-            $productType->outlet?->name ?? '-',
             $productType->products_count ?? 0,
             $productType->is_active ? 'Active' : 'Inactive',
             $productType->sort_order,

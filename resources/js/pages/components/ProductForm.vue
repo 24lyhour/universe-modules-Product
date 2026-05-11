@@ -64,6 +64,9 @@ const categoryIdString = computed({
 // Categories are no longer filtered by product type since we now use database-driven ProductType
 const filteredCategories = computed(() => props.categories);
 
+// Show all product types (global, not filtered by outlet)
+const filteredProductTypes = computed(() => props.productTypes);
+
 // Status type alias
 type ProductStatus = 'active' | 'inactive' | 'draft' | 'out_of_stock';
 
@@ -142,7 +145,7 @@ const formatCurrency = (value: number) => {
                         </SelectTrigger>
                         <SelectContent class="z-200">
                             <SelectItem
-                                v-for="productType in props.productTypes"
+                                v-for="productType in filteredProductTypes"
                                 :key="productType.id"
                                 :value="productType.id.toString()"
                             >

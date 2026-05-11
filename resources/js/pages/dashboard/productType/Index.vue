@@ -52,7 +52,6 @@ const props = defineProps<ProductTypeIndexProps>();
 // State
 const searchQuery = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.is_active !== undefined ? String(props.filters.is_active) : 'all');
-const outletFilter = ref(props.filters.outlet_id?.toString() || 'all');
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
 const selectedItem = ref<ProductTypeItem | null>(null);
@@ -68,12 +67,11 @@ const pagination = computed(() => ({
 
 // Table columns
 const columns: TableColumn<ProductTypeItem>[] = [
-    { key: 'name', label: 'Name', width: '20%' },
+    { key: 'name', label: 'Name', width: '25%' },
     { key: 'products_count', label: 'Products', width: '10%', align: 'center' },
-    { key: 'description', label: 'Description', width: '25%' },
-    { key: 'outlet', label: 'Outlet', width: '15%' },
+    { key: 'description', label: 'Description', width: '35%' },
     { key: 'is_active', label: 'Status', width: '15%' },
-    { key: 'sort_order', label: 'Order', width: '10%', align: 'center' },
+    { key: 'sort_order', label: 'Order', width: '15%', align: 'center' },
 ];
 
 // Table actions
@@ -129,7 +127,6 @@ const applyFilters = (overrides: { page?: number; per_page?: number } = {}) => {
     router.get('/dashboard/product-types', {
         search: searchQuery.value || undefined,
         is_active: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-        outlet_id: outletFilter.value !== 'all' ? outletFilter.value : undefined,
         ...overrides,
     }, { preserveState: true });
 };
@@ -149,11 +146,6 @@ const handleSearch = (search: string) => {
 
 const handleStatusFilter = (value: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
     statusFilter.value = String(value || 'all');
-    applyFilters({ page: 1 });
-};
-
-const handleOutletFilter = (value: string | number | boolean | bigint | Record<string, unknown> | null | undefined) => {
-    outletFilter.value = String(value || 'all');
     applyFilters({ page: 1 });
 };
 
@@ -185,13 +177,12 @@ const handleRowClick = (item: ProductTypeItem) => {
 
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
-    return !!(searchQuery.value || statusFilter.value !== 'all' || outletFilter.value !== 'all');
+    return !!(searchQuery.value || statusFilter.value !== 'all');
 });
 
 const handleClearFilters = () => {
     searchQuery.value = '';
     statusFilter.value = 'all';
-    outletFilter.value = 'all';
     router.get('/dashboard/product-types', {}, { preserveState: true, preserveScroll: true });
 };
 
@@ -304,23 +295,6 @@ const handleStatusToggle = (item: ProductTypeItem, newStatus: boolean) => {
                         </SelectContent>
                     </Select>
 
-                    <!-- Outlet Filter -->
-                    <Select v-if="props.outlets && props.outlets.length > 0" :model-value="outletFilter" @update:model-value="handleOutletFilter">
-                        <SelectTrigger class="w-[180px]">
-                            <SelectValue placeholder="All Outlets" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Outlets</SelectItem>
-                            <SelectItem
-                                v-for="outlet in props.outlets"
-                                :key="outlet.id"
-                                :value="outlet.id.toString()"
-                            >
-                                {{ outlet.name }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-
                     <!-- Clear Filters Button -->
                     <Button
                         v-if="hasActiveFilters"
@@ -362,18 +336,6 @@ const handleStatusToggle = (item: ProductTypeItem, newStatus: boolean) => {
                 <span class="line-clamp-2 text-sm text-muted-foreground">
                     {{ item.description || '-' }}
                 </span>
-            </template>
-
-            <template #cell-outlet="{ item }">
-                <Badge
-                    v-if="item.outlet"
-                    variant="secondary"
-                    class="cursor-pointer transition-colors hover:bg-secondary/80"
-                    @click.stop="router.visit(`/dashboard/products?outlet_id=${item.outlet.id}`)"
-                >
-                    {{ item.outlet.name }}
-                </Badge>
-                <span v-else class="text-muted-foreground">-</span>
             </template>
 
             <template #cell-is_active="{ item }">

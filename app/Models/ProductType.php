@@ -2,21 +2,17 @@
 
 namespace Modules\Product\Models;
 
-use App\Traits\BelongsToOutlet;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Outlet\Models\Outlet;
 use Modules\Product\Database\Factories\ProductTypeFactory;
 
 class ProductType extends Model
 {
     use HasFactory;
     use HasUuid;
-    use BelongsToOutlet;
     use SoftDeletes;
 
     /**
@@ -27,7 +23,6 @@ class ProductType extends Model
         'name',
         'slug',
         'description',
-        'outlet_id',
         'sort_order',
         'is_active',
     ];
@@ -57,14 +52,6 @@ class ProductType extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'product_type_id');
-    }
-
-    /**
-     * Get the outlet that owns this product type.
-     */
-    public function outlet(): BelongsTo
-    {
-        return $this->belongsTo(Outlet::class);
     }
 
     /**
