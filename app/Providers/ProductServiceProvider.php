@@ -2,12 +2,13 @@
 
 namespace Modules\Product\Providers;
 
-use App\Services\MenuService;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Product\Console\Commands\ProductCommand;
 use Modules\Product\Console\Commands\ProductCreateCommand;
 use Modules\Product\Console\Commands\ProductListCommand;
+use Modules\Product\Http\Middleware\DashboardMiddlewareHandle;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -30,88 +31,18 @@ class ProductServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
-        $this->registerMenus();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerDashboardMiddleware();
     }
 
     /**
-     * Register module menus.
+     * Sidebar entries live in DashboardMiddlewareHandle.
      */
-    protected function registerMenus(): void
+    protected function registerDashboardMiddleware(): void
     {
-        $this->app->booted(function () {
-            // Add Product menu to primary sidebar
-            MenuService::addMenuItem(
-                'primary',
-                'product',
-                __('Products'),
-                '/dashboard/products',
-                'LayoutGrid',
-                20,
-                'products.view_any',
-                'product.products.*'
-            );
-
-            // Product Type
-            MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Product Types'),
-                '/dashboard/product-types',
-                15,
-                'product_types.view_any',
-                'product.product-types.index',
-                'PackageSearch'
-            );
-
-            // Brands submenu
-            MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Brands'),
-                '/dashboard/brands',
-                17,
-                'brands.view_any',
-                'product.brands.index',
-                'Tag'
-            );
-
-            // Product submenu
-            MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Products'),
-                '/dashboard/products',
-                10,
-                'products.view_any',
-                'product.products.index',
-                'LayoutGrid'
-            );
-
-            // Attributes submenu
-            MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Attributes'),
-                '/dashboard/products/attributes',
-                20,
-                'product_attributes.view_any',
-                'dashboard.product.attributes.index',
-                'Tags'
-            );
-
-            // Add-ons submenu
-            MenuService::addSubmenuItem(
-                'primary',
-                'product',
-                __('Add-ons'),
-                '/dashboard/products/addons',
-                30,
-                'product_add_ons.view_any',
-                'dashboard.product.addons.all',
-                'PlusCircle'
-            );
-        });
+        /** @var \Illuminate\Foundation\Http\Kernel $kernel */
+        $kernel = $this->app->make(HttpKernel::class);
+        $kernel->prependMiddlewareToGroup('web', DashboardMiddlewareHandle::class);
     }
 
     /**
